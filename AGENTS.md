@@ -10,7 +10,7 @@
 <!-- LOVABLE:END -->
 
 ## Architecture rules
-- Private single-tenant app: public signup is disabled; first created auth user becomes admin via `handle_new_user` trigger. Why: platform is for owner's own use.
+- Private single-tenant app: public signup is disabled; login is username + password, mapped to synthetic email `<username>@pulsar.local` (no real email, so no password-reset email). First created auth user becomes admin via `handle_new_user` trigger. Why: owner wants username-only login.
 - Data access gated by `public.is_member(auth.uid())` (any row in user_roles); suppressions delete and settings writes require admin. Why: shared workspace, least privilege for destructive actions.
 - Provider secrets (email/WhatsApp) live only in server secrets and are used from `createServerFn`/`/api/public/*` routes, never in tables or the browser. Why: spec forbids exposing tokens.
 - Delivery states are distinct (`accepted` vs `delivered`); never mark delivered without a provider webhook. Why: reports must not show fake results.
