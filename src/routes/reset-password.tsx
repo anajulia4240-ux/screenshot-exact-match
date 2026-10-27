@@ -42,11 +42,11 @@ function ResetPage() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (password !== confirm) return toast.error("As senhas não conferem.");
+    if (password !== confirm) { toast.error("As senhas não conferem."); return; }
     setLoading(true);
     const { error } = await supabase.auth.updateUser({ password });
     setLoading(false);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Senha atualizada.");
     navigate({ to: "/dashboard", replace: true });
   }
