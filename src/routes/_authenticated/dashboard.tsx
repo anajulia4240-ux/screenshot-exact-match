@@ -102,7 +102,7 @@ function Dashboard() {
           ) : (
             <div className="h-56">
               <ResponsiveContainer>
-                <AreaChart data={activity.data}>
+                <AreaChart data={activity.data ?? []}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
                   <XAxis dataKey="day" fontSize={11} stroke="var(--color-muted-foreground)" />
                   <YAxis fontSize={11} stroke="var(--color-muted-foreground)" allowDecimals={false} />

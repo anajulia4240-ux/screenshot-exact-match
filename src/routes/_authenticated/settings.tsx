@@ -74,7 +74,7 @@ function Profile() {
     setSaving(true);
     const { error } = await supabase.from("profiles").update({ full_name: name, timezone: tz }).eq("id", m.user.id);
     setSaving(false);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     await logActivity("profile.update");
     qc.invalidateQueries({ queryKey: ["me"] });
     toast.success("Perfil atualizado.");
@@ -112,7 +112,7 @@ function Security() {
     setSaving(true);
     const { error } = await supabase.auth.updateUser({ password: next, current_password: current } as never);
     setSaving(false);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     await logActivity("auth.password_change");
     setCurrent("");
     setNext("");
