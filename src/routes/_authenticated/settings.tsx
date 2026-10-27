@@ -83,8 +83,8 @@ function Profile() {
   return (
     <form onSubmit={save} className="max-w-lg space-y-4 rounded-lg border bg-card p-5">
       <div className="text-sm">
-        <p className="text-muted-foreground">E-mail</p>
-        <p className="font-medium">{m.user.email}</p>
+        <p className="text-muted-foreground">Usuário</p>
+        <p className="font-medium">{m.user.email?.split("@")[0]}</p>
       </div>
       <div className="text-sm">
         <p className="text-muted-foreground">Permissão</p>

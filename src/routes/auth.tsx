@@ -23,8 +23,7 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"login" | "forgot">("login");
-  const [email, setEmail] = useState("");
+    const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -32,22 +31,15 @@ function AuthPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      if (mode === "login") {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        await logActivity("auth.login");
-        navigate({ to: "/dashboard", replace: true });
-      } else {
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/reset-password`,
-        });
-        if (error) throw error;
-        toast.success("Se o e-mail estiver cadastrado, você receberá um link de redefinição.");
-        setMode("login");
-      }
+      // Login por usuário: o usuário é convertido em um e-mail interno fixo.
+      const user = username.trim().toLowerCase();
+      const { error } = await supabase.auth.signInWithPassword({ email: `${user}@pulsar.local`, password });
+      if (error) throw error;
+      await logActivity("auth.login");
+      navigate({ to: "/dashboard", replace: true });
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Erro inesperado";
-      toast.error(msg === "Invalid login credentials" ? "E-mail ou senha incorretos." : msg);
+      toast.error(msg === "Invalid login credentials" ? "Usuário ou senha incorretos." : msg);
     } finally {
       setLoading(false);
     }
@@ -74,35 +66,21 @@ function AuthPage() {
       <div className="flex items-center justify-center p-6">
         <form onSubmit={onSubmit} className="w-full max-w-sm space-y-5">
           <div>
-            <h2 className="text-2xl font-semibold">{mode === "login" ? "Entrar" : "Recuperar senha"}</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {mode === "login" ? "Use as credenciais fornecidas pelo administrador." : "Enviaremos um link para redefinir sua senha."}
-            </p>
+            <h2 className="text-2xl font-semibold">Entrar</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Informe seu usuário e senha.</p>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="email">E-mail</Label>
-            <Input id="email" type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            <Label htmlFor="username">Usuário</Label>
+            <Input id="username" required autoComplete="username" autoCapitalize="none" value={username} onChange={(e) => setUsername(e.target.value)} />
           </div>
-          {mode === "login" && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Senha</Label>
-                <button type="button" className="text-xs text-primary hover:underline" onClick={() => setMode("forgot")}>
-                  Esqueci minha senha
-                </button>
-              </div>
-              <Input id="password" type="password" required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
-            </div>
-          )}
+          <div className="space-y-2">
+            <Label htmlFor="password">Senha</Label>
+            <Input id="password" type="password" required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+          </div>
           <Button type="submit" className="w-full" disabled={loading}>
             {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-            {mode === "login" ? "Entrar" : "Enviar link"}
+            Entrar
           </Button>
-          {mode === "forgot" && (
-            <button type="button" className="w-full text-center text-sm text-muted-foreground hover:text-foreground" onClick={() => setMode("login")}>
-              Voltar ao login
-            </button>
-          )}
         </form>
       </div>
     </div>
