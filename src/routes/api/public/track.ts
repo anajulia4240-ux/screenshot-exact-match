@@ -34,7 +34,7 @@ export const Route = createFileRoute("/api/public/track")({
         if (!sessionId) {
           const { data, error } = await db.from("sessions").insert({
             ip, user_agent: ua, referrer: b.referrer || null, current_page: b.page ?? null,
-            utm_source: b.utm?.utm_source ?? null, utm_medium: b.utm?.utm_medium ?? null, utm_campaign: b.utm?.utm_campaign ?? null,
+            utm_source: b.utm?.["utm_source"] ?? null, utm_medium: b.utm?.["utm_medium"] ?? null, utm_campaign: b.utm?.["utm_campaign"] ?? null,
           }).select("id").single();
           if (error) return Response.json({ error: "session" }, { status: 500 });
           sessionId = data.id;
@@ -42,7 +42,7 @@ export const Route = createFileRoute("/api/public/track")({
 
         await db.from("events").insert({
           session_id: sessionId, type: b.type, page: b.page ?? null,
-          value_cents: typeof b.data?.value_cents === "number" ? b.data.value_cents : null,
+          value_cents: typeof b.data?.["value_cents"] === "number" ? b.data.value_cents : null,
           data: { ...(b.utm ?? {}), ...(b.data ?? {}) },
         });
 
