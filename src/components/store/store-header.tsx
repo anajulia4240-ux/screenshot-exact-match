@@ -32,7 +32,7 @@ const FOOTER_COLUMNS: { title: string; items: string[] }[] = [
   { title: "Política", items: ["Políticas de Privacidade", "Política de Reembolso", "Troca e devoluções", "Frete e entrega", "Termos de Serviço", "Aviso Legal"] },
 ];
 
-function StoreFooter() {
+export function StoreFooter() {
   const [email, setEmail] = useState("");
   return (
     <footer className="mt-16 border-t bg-card text-sm text-muted-foreground">
