@@ -46,6 +46,7 @@ function StorePage() {
   return (
     <div className="store-theme min-h-screen">
       <StoreHeader />
+      <img src={bannerAsset.url} alt="Promoção byhappy" className="w-full" />
       <section className="mx-auto max-w-6xl px-4 py-10 text-center">
         <h1 className="text-3xl font-bold md:text-4xl">Kits Happy Hair com brindes grátis</h1>
         <p className="mt-2 text-muted-foreground">Quanto maior o kit, maior o desconto — até 80% off.</p>
