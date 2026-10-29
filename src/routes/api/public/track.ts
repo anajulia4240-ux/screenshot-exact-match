@@ -42,7 +42,7 @@ export const Route = createFileRoute("/api/public/track")({
 
         await db.from("events").insert({
           session_id: sessionId, type: b.type, page: b.page ?? null,
-          value_cents: typeof b.data?.["value_cents"] === "number" ? b.data.value_cents : null,
+          value_cents: typeof b.data?.["value_cents"] === "number" ? b.data["value_cents"] : null,
           data: { ...(b.utm ?? {}), ...(b.data ?? {}) },
         });
 
