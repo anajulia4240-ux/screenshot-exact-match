@@ -16,7 +16,7 @@ export const Route = createFileRoute("/_authenticated/events")({
 
 interface Ev { id: string; type: string; lead_id: string | null; session_id: string | null; page: string | null; value_cents: number | null; data: unknown; created_at: string }
 interface Lead { id: string; name: string; phone: string | null; email: string | null; city: string | null }
-interface Customer { key: string; events: Ev[]; lead?: Lead; ids: Set<string> }
+interface Customer { key: string; events: Ev[]; lead?: Lead | undefined; ids: Set<string> }
 
 const LABELS: Record<string, string> = {
   click: "Clique", product_view: "Viu produto", add_to_cart: "Carrinho", checkout_opened: "Abriu checkout",
@@ -45,7 +45,7 @@ function groupByCustomer(events: Ev[], leads: Map<string, Lead>): Customer[] {
     field(e, "phone") && `phone:${field(e, "phone")}`, e.session_id && `session:${e.session_id}`,
   ].filter((x): x is string => !!x);
   const keyed = events.map((e) => ({ e, ids: idsOf(e) }));
-  keyed.forEach(({ ids }) => { ids.forEach((i) => { if (!parent.has(i)) parent.set(i, i); }); ids.slice(1).forEach((i) => union(ids[0], i)); });
+  keyed.forEach(({ ids }) => { ids.forEach((i) => { if (!parent.has(i)) parent.set(i, i); }); ids.slice(1).forEach((i) => union(ids[0]!, i)); });
   const groups = new Map<string, Customer>();
   keyed.forEach(({ e, ids }) => {
     const root = ids[0] ? find(ids[0]) : `ev:${e.id}`;
@@ -59,7 +59,7 @@ function groupByCustomer(events: Ev[], leads: Map<string, Lead>): Customer[] {
     const lid = [...g.ids].find((i) => i.startsWith("lead:"))?.slice(5);
     g.lead = lid ? leads.get(lid) : undefined;
   });
-  return out.sort((a, b) => +new Date(b.events[0].created_at) - +new Date(a.events[0].created_at));
+  return out.sort((a, b) => +new Date(b.events[0]?.created_at ?? 0) - +new Date(a.events[0]?.created_at ?? 0));
 }
 
 function status(c: Customer) {
@@ -137,7 +137,7 @@ function CustomerCard({ c, ads }: { c: Customer; ads: ReturnType<typeof extractA
         </div>
         <div className="text-right text-xs text-muted-foreground">
           {cart > 0 && <p className="text-sm font-semibold text-foreground tabular">{brl(cart)}</p>}
-          <p>{fmtDateTime(c.events[0].created_at)}</p>
+          <p>{fmtDateTime(c.events[0]?.created_at)}</p>
         </div>
         <ChevronDown className={open ? "h-4 w-4 rotate-180 transition" : "h-4 w-4 transition"} />
       </button>
@@ -154,7 +154,7 @@ function CustomerCard({ c, ads }: { c: Customer; ads: ReturnType<typeof extractA
           </ul>
           <dl className="mt-4 grid gap-1 text-xs text-muted-foreground sm:grid-cols-2">
             <div>Origem: {ads.source ?? "—"} · Posicionamento: {ads.placement ?? "—"}</div>
-            <div>Primeira página: {c.events[c.events.length - 1].page ?? "—"}</div>
+            <div>Primeira página: {c.events[c.events.length - 1]?.page ?? "—"}</div>
           </dl>
         </div>
       )}

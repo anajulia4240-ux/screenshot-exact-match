@@ -61,6 +61,7 @@ function LivePage() {
   const sum = (st?: string) => (d?.orders ?? []).filter((o) => !st || o.status === st).reduce((a, o) => a + o.total_cents, 0);
   const n = (st: string) => (d?.orders ?? []).filter((o) => o.status === st).length;
   const funnel = STAGES.map((s) => ({ ...s, value: count(s.types) }));
+  const top = funnel[0]?.value ?? 0;
   const max = Math.max(1, ...funnel.map((f) => f.value));
 
   const pages = new Map<string, number>();
@@ -105,7 +106,7 @@ function LivePage() {
                   <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${(f.value / max) * 100}%` }} />
                 </div>
                 <span className="w-12 text-right font-medium tabular">{f.value}</span>
-                <span className="w-12 text-right text-xs text-muted-foreground tabular">{funnel[0].value > 0 && i > 0 ? `${((f.value / funnel[0].value) * 100).toFixed(0)}%` : ""}</span>
+                <span className="w-12 text-right text-xs text-muted-foreground tabular">{top > 0 && i > 0 ? `${((f.value / top) * 100).toFixed(0)}%` : ""}</span>
                 <Button
                   size="icon" variant="ghost" className="h-7 w-7" aria-label={`Zerar ${f.label}`}
                   disabled={reset.isPending || f.value === 0}

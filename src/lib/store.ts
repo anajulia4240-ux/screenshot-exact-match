@@ -41,7 +41,7 @@ function clean(v: unknown): string | null {
   if (typeof v !== "string") return null;
   const t = v.trim();
   if (!t || t.includes("{{") || t.toLowerCase().includes("%7b") || PLACEHOLDER.has(t.toLowerCase())) return null;
-  return t.includes("|") ? t.split("|")[0].trim() || null : t;
+  return t.includes("|") ? (t.split("|")[0] ?? "").trim() || null : t;
 }
 
 /** Fonte única da origem do anúncio: aceita N fontes por ordem de confiança. */

@@ -43,7 +43,7 @@ function CouponsPage() {
   const create = useMutation({
     mutationFn: async () => {
       const p = schema.safeParse({ code, percent: Number(percent), minReais: Number(min.replace(",", ".")) });
-      if (!p.success) throw new Error(p.error.issues[0].message);
+      if (!p.success) throw new Error(p.error.issues[0]?.message ?? "Dados inválidos.");
       const { error } = await supabase.from("coupons").insert({
         code: p.data.code.toUpperCase(), percent: p.data.percent, min_value_cents: Math.round(p.data.minReais * 100),
         expires_at: expires ? new Date(`${expires}T23:59:59-03:00`).toISOString() : null,
