@@ -1,6 +1,9 @@
+import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ShoppingBag } from "lucide-react";
+import { toast } from "sonner";
+import { Facebook, Instagram, ShoppingBag, Youtube } from "lucide-react";
 import { useCart } from "@/lib/cart";
+import { Button } from "@/components/ui/button";
 
 export function StoreHeader() {
   const cart = useCart();
