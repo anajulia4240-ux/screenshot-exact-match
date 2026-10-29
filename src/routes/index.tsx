@@ -62,6 +62,7 @@ function StorePage() {
         </div>
       </main>
       <StoreFooter />
+      <SocialProof />
     </div>
   );
 }
