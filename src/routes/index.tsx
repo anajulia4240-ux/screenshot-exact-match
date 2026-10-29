@@ -6,6 +6,7 @@ import { brl } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { StoreFooter, StoreHeader } from "@/components/store/store-header";
 import { SocialProof } from "@/components/store/social-proof";
+import { VideoSection } from "@/components/store/video-section";
 import bannerAsset from "@/assets/banner-byhappy.png.asset.json";
 
 export const Route = createFileRoute("/")({
@@ -62,6 +63,7 @@ function StorePage() {
           {AVULSOS.map((p) => <ProductCard key={p.slug} p={p} />)}
         </div>
       </main>
+      <VideoSection />
       <StoreFooter />
       <SocialProof />
     </div>
