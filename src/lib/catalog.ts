@@ -36,3 +36,8 @@ export const PRODUCTS: Product[] = [
 ];
 
 export const findProduct = (slug: string): Product | undefined => PRODUCTS.find((p) => p.slug === slug);
+
+/** Kits são combos com mais de 1 pote ou brindes — foco principal da loja. */
+export const isKit = (p: Product): boolean => /\d+\s*potes|grátis|total/i.test(p.name) && !/^1 pote/i.test(p.name);
+export const KITS: Product[] = PRODUCTS.filter(isKit);
+export const AVULSOS: Product[] = PRODUCTS.filter((p) => !isKit(p));
