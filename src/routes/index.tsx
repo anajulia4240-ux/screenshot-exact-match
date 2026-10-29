@@ -32,6 +32,7 @@ function ProductCard({ p }: { p: Product }) {
       </div>
       <div className="flex flex-1 flex-col gap-2 p-3">
         <h3 className="line-clamp-3 text-sm font-medium">{p.name}</h3>
+        <p className="text-xs font-medium text-muted-foreground">Tratamento para {p.days} dias</p>
         <div className="mt-auto">
           {off > 0 && <p className="text-xs text-muted-foreground line-through">{brl(p.compareAt)}</p>}
           <p className="text-lg font-bold text-primary">{brl(p.price)}</p>
