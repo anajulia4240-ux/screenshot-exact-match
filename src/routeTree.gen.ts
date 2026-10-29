@@ -16,6 +16,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedCouponsRouteImport } from './routes/_authenticated/coupons'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedEventsRouteImport } from './routes/_authenticated/events'
+import { Route as AuthenticatedGodRouteImport } from './routes/_authenticated/god'
 import { Route as AuthenticatedLogsRouteImport } from './routes/_authenticated/logs'
 import { Route as AuthenticatedOrdersRouteImport } from './routes/_authenticated/orders'
 import { Route as AuthenticatedSecurityRouteImport } from './routes/_authenticated/security'
@@ -56,6 +57,11 @@ const AuthenticatedEventsRoute = AuthenticatedEventsRouteImport.update({
   path: '/events',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedGodRoute = AuthenticatedGodRouteImport.update({
+  id: '/god',
+  path: '/god',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedLogsRoute = AuthenticatedLogsRouteImport.update({
   id: '/logs',
   path: '/logs',
@@ -89,6 +95,7 @@ export interface FileRoutesByFullPath {
   '/coupons': typeof AuthenticatedCouponsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/events': typeof AuthenticatedEventsRoute
+  '/god': typeof AuthenticatedGodRoute
   '/logs': typeof AuthenticatedLogsRoute
   '/orders': typeof AuthenticatedOrdersRoute
   '/security': typeof AuthenticatedSecurityRoute
@@ -102,6 +109,7 @@ export interface FileRoutesByTo {
   '/coupons': typeof AuthenticatedCouponsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/events': typeof AuthenticatedEventsRoute
+  '/god': typeof AuthenticatedGodRoute
   '/logs': typeof AuthenticatedLogsRoute
   '/orders': typeof AuthenticatedOrdersRoute
   '/security': typeof AuthenticatedSecurityRoute
@@ -117,6 +125,7 @@ export interface FileRoutesById {
   '/_authenticated/coupons': typeof AuthenticatedCouponsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/events': typeof AuthenticatedEventsRoute
+  '/_authenticated/god': typeof AuthenticatedGodRoute
   '/_authenticated/logs': typeof AuthenticatedLogsRoute
   '/_authenticated/orders': typeof AuthenticatedOrdersRoute
   '/_authenticated/security': typeof AuthenticatedSecurityRoute
@@ -132,6 +141,7 @@ export interface FileRouteTypes {
     | '/coupons'
     | '/dashboard'
     | '/events'
+    | '/god'
     | '/logs'
     | '/orders'
     | '/security'
@@ -145,6 +155,7 @@ export interface FileRouteTypes {
     | '/coupons'
     | '/dashboard'
     | '/events'
+    | '/god'
     | '/logs'
     | '/orders'
     | '/security'
@@ -159,6 +170,7 @@ export interface FileRouteTypes {
     | '/_authenticated/coupons'
     | '/_authenticated/dashboard'
     | '/_authenticated/events'
+    | '/_authenticated/god'
     | '/_authenticated/logs'
     | '/_authenticated/orders'
     | '/_authenticated/security'
@@ -224,6 +236,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEventsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/god': {
+      id: '/_authenticated/god'
+      path: '/god'
+      fullPath: '/god'
+      preLoaderRoute: typeof AuthenticatedGodRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/logs': {
       id: '/_authenticated/logs'
       path: '/logs'
@@ -266,6 +285,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCouponsRoute: typeof AuthenticatedCouponsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedEventsRoute: typeof AuthenticatedEventsRoute
+  AuthenticatedGodRoute: typeof AuthenticatedGodRoute
   AuthenticatedLogsRoute: typeof AuthenticatedLogsRoute
   AuthenticatedOrdersRoute: typeof AuthenticatedOrdersRoute
   AuthenticatedSecurityRoute: typeof AuthenticatedSecurityRoute
@@ -277,6 +297,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCouponsRoute: AuthenticatedCouponsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedEventsRoute: AuthenticatedEventsRoute,
+  AuthenticatedGodRoute: AuthenticatedGodRoute,
   AuthenticatedLogsRoute: AuthenticatedLogsRoute,
   AuthenticatedOrdersRoute: AuthenticatedOrdersRoute,
   AuthenticatedSecurityRoute: AuthenticatedSecurityRoute,
