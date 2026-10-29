@@ -11,9 +11,9 @@ import { logActivity } from "@/lib/audit";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Entrar — Pulsar" },
+      { title: "Entrar — Painel Admin" },
       { name: "description", content: "Acesso restrito ao painel de automação de marketing." },
-      { property: "og:title", content: "Entrar — Pulsar" },
+      { property: "og:title", content: "Entrar — Painel Admin" },
       { property: "og:description", content: "Acesso restrito ao painel de automação de marketing." },
       { name: "robots", content: "noindex" },
     ],
@@ -52,13 +52,13 @@ function AuthPage() {
           <div className="flex h-8 w-8 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
             <Zap className="h-4 w-4" />
           </div>
-          <span className="text-lg font-semibold">Pulsar</span>
+          <span className="text-lg font-semibold">Painel Admin</span>
         </div>
         <div className="max-w-md">
           <h1 className="text-3xl font-semibold leading-tight text-sidebar-accent-foreground">
-            E-mail e WhatsApp, com consentimento e entrega comprovada.
+            Pedidos, visitantes e campanhas da loja em tempo real.
           </h1>
-          <p className="mt-3 text-sm">Contatos, campanhas, automações e relatórios em um só painel privado.</p>
+          <p className="mt-3 text-sm">Acompanhe o funil, a origem dos anúncios e a segurança do site.</p>
         </div>
         <p className="text-xs opacity-60">Acesso restrito a usuários autorizados.</p>
       </div>

@@ -11,9 +11,9 @@ export const Route = createFileRoute("/reset-password")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Redefinir senha — Pulsar" },
+      { title: "Redefinir senha — Painel Admin" },
       { name: "description", content: "Defina uma nova senha de acesso." },
-      { property: "og:title", content: "Redefinir senha — Pulsar" },
+      { property: "og:title", content: "Redefinir senha — Painel Admin" },
       { property: "og:description", content: "Defina uma nova senha de acesso." },
       { name: "robots", content: "noindex" },
     ],
