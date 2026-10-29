@@ -2,7 +2,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
 import {
-  BarChart3, Cable, LayoutDashboard, ListFilter, LogOut, Mail, Menu, MessageCircle, Megaphone, Settings, Users, Workflow, Zap,
+  Activity, Eye, Globe, LogOut, Menu, ReceiptText, ScrollText, Settings, ShieldAlert, Sparkles, Tag, Zap,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -10,15 +10,14 @@ import { Button } from "@/components/ui/button";
 import { logActivity } from "@/lib/audit";
 
 const NAV = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/contacts", label: "Contatos", icon: Users },
-  { to: "/lists", label: "Listas e segmentos", icon: ListFilter },
-  { to: "/campaigns", label: "Campanhas", icon: Megaphone },
-  { to: "/email", label: "E-mail marketing", icon: Mail },
-  { to: "/whatsapp", label: "WhatsApp", icon: MessageCircle },
-  { to: "/automations", label: "Automações", icon: Workflow },
-  { to: "/reports", label: "Relatórios", icon: BarChart3 },
-  { to: "/integrations", label: "Integrações", icon: Cable },
+  { to: "/dashboard", label: "Ao vivo", icon: Activity },
+  { to: "/events", label: "Eventos", icon: Eye },
+  { to: "/orders", label: "Pedidos", icon: ReceiptText },
+  { to: "/god", label: "Modo Deus", icon: Sparkles },
+  { to: "/visitors", label: "Visitantes (IPs)", icon: Globe },
+  { to: "/security", label: "Segurança", icon: ShieldAlert },
+  { to: "/logs", label: "Logs", icon: ScrollText },
+  { to: "/coupons", label: "Cupons", icon: Tag },
   { to: "/settings", label: "Configurações", icon: Settings },
 ] as const;
 
@@ -47,7 +46,7 @@ function Brand() {
       <div className="flex h-7 w-7 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
         <Zap className="h-4 w-4" />
       </div>
-      <span className="font-semibold">Pulsar</span>
+      <span className="font-semibold">Painel Admin</span>
     </div>
   );
 }
@@ -102,23 +101,6 @@ export function AppShell({ title, actions, children }: { title: string; actions?
         </header>
         <main className="flex-1 p-4 lg:p-6">{children}</main>
       </div>
-    </div>
-  );
-}
-
-export function PhasePending({ phase, items }: { phase: number; items: string[] }) {
-  return (
-    <div className="rounded-lg border border-dashed bg-card p-8">
-      <span className="inline-flex rounded-full bg-accent px-2.5 py-0.5 text-xs font-medium text-accent-foreground">Fase {phase}</span>
-      <h2 className="mt-3 text-lg font-semibold">Módulo ainda não implementado</h2>
-      <p className="mt-1 text-sm text-muted-foreground">
-        A estrutura de dados já está pronta. Este módulo será liberado na fase {phase} e incluirá:
-      </p>
-      <ul className="mt-4 grid gap-1.5 text-sm sm:grid-cols-2">
-        {items.map((i) => (
-          <li key={i} className="flex gap-2"><span className="text-primary">•</span>{i}</li>
-        ))}
-      </ul>
     </div>
   );
 }
