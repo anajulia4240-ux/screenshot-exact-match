@@ -17,3 +17,4 @@
 - App pages use `AppShell` from `src/components/app-shell.tsx` under `src/routes/_authenticated/`; the project is a store admin panel (one route per tab).
 - Ad-origin labels always come from `extractAdsInfo` in `src/lib/store.ts`. Why: every tab must show the same campaign/adset/ad for a customer.
 - Store tracking tables are member-only; the storefront must write through `/api/public/*` server routes, never with anon table access. Why: anon write policies let anyone forge or unlock sessions.
+- The storefront lives at `/` and `/checkout` (painel at `/auth` → `/dashboard`); order totals are always recomputed server-side from `src/lib/catalog.ts`. Why: the browser must never set prices.
