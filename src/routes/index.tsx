@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { StoreFooter, StoreHeader } from "@/components/store/store-header";
 import { SocialProof } from "@/components/store/social-proof";
 import { VideoSection } from "@/components/store/video-section";
+import { ReviewsSection } from "@/components/store/reviews-section";
 import bannerAsset from "@/assets/banner-byhappy.png.asset.json";
 
 export const Route = createFileRoute("/")({
@@ -64,6 +65,7 @@ function StorePage() {
         </div>
       </main>
       <VideoSection />
+      <ReviewsSection />
       <StoreFooter />
       <SocialProof />
     </div>
