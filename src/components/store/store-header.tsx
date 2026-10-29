@@ -57,7 +57,7 @@ export function StoreFooter() {
           <Button type="submit" className="rounded-full px-8 lowercase">enviar</Button>
         </form>
       </div>
-      <div className="mx-auto grid max-w-6xl grid-cols-2 gap-8 px-4 pb-10 md:grid-cols-4">
+      <div className="mx-auto grid max-w-6xl grid-cols-2 gap-8 px-4 pb-10 md:grid-cols-5">
         <div>
           <h3 className="mb-3 font-bold text-foreground">Contato</h3>
           <p>E-mail: contato@byhappy.com.br</p>
