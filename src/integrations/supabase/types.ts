@@ -32,6 +32,45 @@ export type Database = {
         }
         Relationships: []
       }
+      attack_log: {
+        Row: {
+          attack_type: string
+          blocked: boolean
+          created_at: string
+          id: string
+          ip: string | null
+          method: string | null
+          payload_preview: string | null
+          rule_matched: string | null
+          severity: string
+          url: string | null
+        }
+        Insert: {
+          attack_type: string
+          blocked?: boolean
+          created_at?: string
+          id?: string
+          ip?: string | null
+          method?: string | null
+          payload_preview?: string | null
+          rule_matched?: string | null
+          severity?: string
+          url?: string | null
+        }
+        Update: {
+          attack_type?: string
+          blocked?: boolean
+          created_at?: string
+          id?: string
+          ip?: string | null
+          method?: string | null
+          payload_preview?: string | null
+          rule_matched?: string | null
+          severity?: string
+          url?: string | null
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action: string
@@ -140,6 +179,66 @@ export type Database = {
           name?: string
           trigger_type?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      banned_ips: {
+        Row: {
+          attack_count: number
+          attack_type: string | null
+          banned_at: string
+          geo_city: string | null
+          geo_country: string | null
+          geo_org: string | null
+          id: string
+          ip: string
+          last_attack_at: string
+          notes: string | null
+          permanent_block: boolean
+          reason: string
+          reviewed: boolean
+          sample_payload: string | null
+          severity: string | null
+          unbanned: boolean
+          user_agent: string | null
+        }
+        Insert: {
+          attack_count?: number
+          attack_type?: string | null
+          banned_at?: string
+          geo_city?: string | null
+          geo_country?: string | null
+          geo_org?: string | null
+          id?: string
+          ip: string
+          last_attack_at?: string
+          notes?: string | null
+          permanent_block?: boolean
+          reason: string
+          reviewed?: boolean
+          sample_payload?: string | null
+          severity?: string | null
+          unbanned?: boolean
+          user_agent?: string | null
+        }
+        Update: {
+          attack_count?: number
+          attack_type?: string | null
+          banned_at?: string
+          geo_city?: string | null
+          geo_country?: string | null
+          geo_org?: string | null
+          id?: string
+          ip?: string
+          last_attack_at?: string
+          notes?: string | null
+          permanent_block?: boolean
+          reason?: string
+          reviewed?: boolean
+          sample_payload?: string | null
+          severity?: string | null
+          unbanned?: boolean
+          user_agent?: string | null
         }
         Relationships: []
       }
@@ -379,6 +478,135 @@ export type Database = {
         }
         Relationships: []
       }
+      coupons: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          min_value_cents: number
+          percent: number
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          min_value_cents?: number
+          percent: number
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          min_value_cents?: number
+          percent?: number
+        }
+        Relationships: []
+      }
+      events: {
+        Row: {
+          created_at: string
+          data: Json | null
+          id: string
+          lead_id: string | null
+          page: string | null
+          session_id: string | null
+          type: string
+          value_cents: number | null
+        }
+        Insert: {
+          created_at?: string
+          data?: Json | null
+          id?: string
+          lead_id?: string | null
+          page?: string | null
+          session_id?: string | null
+          type: string
+          value_cents?: number | null
+        }
+        Update: {
+          created_at?: string
+          data?: Json | null
+          id?: string
+          lead_id?: string | null
+          page?: string | null
+          session_id?: string | null
+          type?: string
+          value_cents?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leads: {
+        Row: {
+          city: string | null
+          country: string | null
+          created_at: string
+          email: string | null
+          id: string
+          ip: string | null
+          last_seen_at: string
+          name: string
+          phone: string | null
+          referrer: string | null
+          user_agent: string | null
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+        }
+        Insert: {
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          ip?: string | null
+          last_seen_at?: string
+          name: string
+          phone?: string | null
+          referrer?: string | null
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Update: {
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          ip?: string | null
+          last_seen_at?: string
+          name?: string
+          phone?: string | null
+          referrer?: string | null
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Relationships: []
+      }
       list_members: {
         Row: {
           added_at: string
@@ -439,6 +667,57 @@ export type Database = {
           name?: string
           rules?: Json
           updated_at?: string
+        }
+        Relationships: []
+      }
+      logs: {
+        Row: {
+          action: string
+          created_at: string
+          destination_phone: string | null
+          extra: Json | null
+          geo_city: string | null
+          geo_country: string | null
+          id: string
+          ip: string | null
+          name: string | null
+          notes: string | null
+          page: string | null
+          phone: string | null
+          suspicious: boolean
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          destination_phone?: string | null
+          extra?: Json | null
+          geo_city?: string | null
+          geo_country?: string | null
+          id?: string
+          ip?: string | null
+          name?: string | null
+          notes?: string | null
+          page?: string | null
+          phone?: string | null
+          suspicious?: boolean
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          destination_phone?: string | null
+          extra?: Json | null
+          geo_city?: string | null
+          geo_country?: string | null
+          id?: string
+          ip?: string | null
+          name?: string | null
+          notes?: string | null
+          page?: string | null
+          phone?: string | null
+          suspicious?: boolean
+          user_agent?: string | null
         }
         Relationships: []
       }
@@ -542,6 +821,71 @@ export type Database = {
         }
         Relationships: []
       }
+      orders: {
+        Row: {
+          confirmed_by: string | null
+          coupon_code: string | null
+          created_at: string
+          customer_email: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          id: string
+          items: Json
+          lead_id: string | null
+          notes: string | null
+          paid_at: string | null
+          payment_method: string
+          status: string
+          total_cents: number
+          tracking: Json
+          updated_at: string
+        }
+        Insert: {
+          confirmed_by?: string | null
+          coupon_code?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          id?: string
+          items?: Json
+          lead_id?: string | null
+          notes?: string | null
+          paid_at?: string | null
+          payment_method?: string
+          status?: string
+          total_cents?: number
+          tracking?: Json
+          updated_at?: string
+        }
+        Update: {
+          confirmed_by?: string | null
+          coupon_code?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          id?: string
+          items?: Json
+          lead_id?: string | null
+          notes?: string | null
+          paid_at?: string | null
+          payment_method?: string
+          status?: string
+          total_cents?: number
+          tracking?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -565,6 +909,56 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      sessions: {
+        Row: {
+          current_page: string | null
+          id: string
+          ip: string | null
+          last_seen_at: string
+          lead_id: string | null
+          referrer: string | null
+          started_at: string
+          user_agent: string | null
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+        }
+        Insert: {
+          current_page?: string | null
+          id?: string
+          ip?: string | null
+          last_seen_at?: string
+          lead_id?: string | null
+          referrer?: string | null
+          started_at?: string
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Update: {
+          current_page?: string | null
+          id?: string
+          ip?: string | null
+          last_seen_at?: string
+          lead_id?: string | null
+          referrer?: string | null
+          started_at?: string
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sessions_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       suppressions: {
         Row: {
@@ -649,6 +1043,114 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      visitor_ips: {
+        Row: {
+          blocked: boolean
+          blocked_at: string | null
+          blocked_reason: string | null
+          first_page: string | null
+          first_seen_at: string
+          fp_gpu: string | null
+          fp_hash: string | null
+          fp_lang: string | null
+          fp_platform: string | null
+          fp_screen: string | null
+          fp_timezone: string | null
+          geo_city: string | null
+          geo_country: string | null
+          geo_country_code: string | null
+          geo_lat: number | null
+          geo_lon: number | null
+          geo_org: string | null
+          geo_region: string | null
+          id: string
+          ip: string
+          is_datacenter: boolean | null
+          is_proxy: boolean | null
+          is_tor: boolean | null
+          is_virtual: boolean | null
+          is_vpn: boolean | null
+          last_page: string | null
+          last_seen_at: string
+          name: string | null
+          notes: string | null
+          permanent_block: boolean
+          tz_mismatch: boolean | null
+          user_agent: string | null
+          visit_count: number
+        }
+        Insert: {
+          blocked?: boolean
+          blocked_at?: string | null
+          blocked_reason?: string | null
+          first_page?: string | null
+          first_seen_at?: string
+          fp_gpu?: string | null
+          fp_hash?: string | null
+          fp_lang?: string | null
+          fp_platform?: string | null
+          fp_screen?: string | null
+          fp_timezone?: string | null
+          geo_city?: string | null
+          geo_country?: string | null
+          geo_country_code?: string | null
+          geo_lat?: number | null
+          geo_lon?: number | null
+          geo_org?: string | null
+          geo_region?: string | null
+          id?: string
+          ip: string
+          is_datacenter?: boolean | null
+          is_proxy?: boolean | null
+          is_tor?: boolean | null
+          is_virtual?: boolean | null
+          is_vpn?: boolean | null
+          last_page?: string | null
+          last_seen_at?: string
+          name?: string | null
+          notes?: string | null
+          permanent_block?: boolean
+          tz_mismatch?: boolean | null
+          user_agent?: string | null
+          visit_count?: number
+        }
+        Update: {
+          blocked?: boolean
+          blocked_at?: string | null
+          blocked_reason?: string | null
+          first_page?: string | null
+          first_seen_at?: string
+          fp_gpu?: string | null
+          fp_hash?: string | null
+          fp_lang?: string | null
+          fp_platform?: string | null
+          fp_screen?: string | null
+          fp_timezone?: string | null
+          geo_city?: string | null
+          geo_country?: string | null
+          geo_country_code?: string | null
+          geo_lat?: number | null
+          geo_lon?: number | null
+          geo_org?: string | null
+          geo_region?: string | null
+          id?: string
+          ip?: string
+          is_datacenter?: boolean | null
+          is_proxy?: boolean | null
+          is_tor?: boolean | null
+          is_virtual?: boolean | null
+          is_vpn?: boolean | null
+          last_page?: string | null
+          last_seen_at?: string
+          name?: string | null
+          notes?: string | null
+          permanent_block?: boolean
+          tz_mismatch?: boolean | null
+          user_agent?: string | null
+          visit_count?: number
         }
         Relationships: []
       }
