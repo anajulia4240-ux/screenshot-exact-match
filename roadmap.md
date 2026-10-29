@@ -1,7 +1,5 @@
 # Roadmap
-- [x] Fase 1: visual, login, banco de dados, dashboard
-- [x] Fase 2: contatos, importação CSV/XLSX, listas, tags, segmentos
-- [ ] Fase 3: e-mail real (aguarda escolha do provedor + chave), campanhas, filas, relatórios
-- [ ] Fase 4: WhatsApp Business (aguarda credenciais da Meta)
-- [ ] Fase 5: automações, agendamentos, logs
-- [ ] Fase 6: testes de segurança e validação completa
+- [x] Painel admin da loja: Ao vivo, Eventos, Pedidos, Modo Deus (trava + chat), Visitantes, Segurança, Logs, Cupons
+- [ ] Conectar o site da loja: envio de eventos, captura de IP/geo e tela de bloqueio (aguarda o site da loja)
+- [ ] Modo Deus: espelho da tela do visitante e tela de atendimento no site (aguarda o site da loja)
+- [ ] Aba CPU / Recursos

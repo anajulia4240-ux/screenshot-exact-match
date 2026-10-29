@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { AppShell, PhasePending } from "@/components/app-shell";
+import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,7 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { logActivity } from "@/lib/audit";
 
 export const Route = createFileRoute("/_authenticated/settings")({
-  head: () => ({ meta: [{ title: "Configurações — Pulsar" }, { name: "description", content: "Conta, segurança e logs." }] }),
+  head: () => ({ meta: [{ title: "Configurações — Painel Admin" }, { name: "description", content: "Conta, segurança e logs." }] }),
   component: SettingsPage,
 });
 
@@ -25,14 +25,10 @@ function SettingsPage() {
           <TabsTrigger value="profile">Perfil</TabsTrigger>
           <TabsTrigger value="security">Segurança</TabsTrigger>
           <TabsTrigger value="logs">Logs de atividades</TabsTrigger>
-          <TabsTrigger value="sending">Envio e filas</TabsTrigger>
         </TabsList>
         <TabsContent value="profile"><Profile /></TabsContent>
         <TabsContent value="security"><Security /></TabsContent>
         <TabsContent value="logs"><Logs /></TabsContent>
-        <TabsContent value="sending">
-          <PhasePending phase={3} items={["Preferências de envio", "Limites de velocidade", "Filas e novas tentativas", "Retenção de dados"]} />
-        </TabsContent>
       </Tabs>
     </AppShell>
   );

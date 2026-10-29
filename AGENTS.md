@@ -14,4 +14,6 @@
 - Data access gated by `public.is_member(auth.uid())` (any row in user_roles); suppressions delete and settings writes require admin. Why: shared workspace, least privilege for destructive actions.
 - Provider secrets (email/WhatsApp) live only in server secrets and are used from `createServerFn`/`/api/public/*` routes, never in tables or the browser. Why: spec forbids exposing tokens.
 - Delivery states are distinct (`accepted` vs `delivered`); never mark delivered without a provider webhook. Why: reports must not show fake results.
-- App pages use `AppShell` from `src/components/app-shell.tsx` under `src/routes/_authenticated/`.
+- App pages use `AppShell` from `src/components/app-shell.tsx` under `src/routes/_authenticated/`; the project is a store admin panel (one route per tab).
+- Ad-origin labels always come from `extractAdsInfo` in `src/lib/store.ts`. Why: every tab must show the same campaign/adset/ad for a customer.
+- Store tracking tables are member-only; the storefront must write through `/api/public/*` server routes, never with anon table access. Why: anon write policies let anyone forge or unlock sessions.

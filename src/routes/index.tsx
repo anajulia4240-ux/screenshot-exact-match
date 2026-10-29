@@ -5,10 +5,10 @@ export const Route = createFileRoute("/")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Pulsar — Automação de Marketing" },
-      { name: "description", content: "Acesse o painel privado de e-mail marketing e WhatsApp." },
-      { property: "og:title", content: "Pulsar — Automação de Marketing" },
-      { property: "og:description", content: "Painel privado de e-mail marketing e WhatsApp." },
+      { title: "Painel Admin — Loja" },
+      { name: "description", content: "Acesse o painel privado da loja." },
+      { property: "og:title", content: "Painel Admin — Loja" },
+      { property: "og:description", content: "Painel privado da loja." },
     ],
   }),
   beforeLoad: async () => {
