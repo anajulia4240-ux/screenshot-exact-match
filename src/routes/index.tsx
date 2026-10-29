@@ -5,6 +5,8 @@ import { addToCart } from "@/lib/cart";
 import { brl } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { StoreFooter, StoreHeader } from "@/components/store/store-header";
+import { SocialProof } from "@/components/store/social-proof";
+import bannerAsset from "@/assets/banner-byhappy.png.asset.json";
 
 export const Route = createFileRoute("/")({
   head: () => ({
