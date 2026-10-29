@@ -7,12 +7,10 @@ const CITIES = ["São Paulo", "Rio de Janeiro", "Belo Horizonte", "Curitiba", "F
 
 interface Proof { name: string; city: string; product: string; }
 
+const pick = <T,>(arr: readonly T[]): T => arr[Math.floor(Math.random() * arr.length)] as T;
+
 function randomProof(): Proof {
-  return {
-    name: NAMES[Math.floor(Math.random() * NAMES.length)],
-    city: CITIES[Math.floor(Math.random() * CITIES.length)],
-    product: KITS[Math.floor(Math.random() * KITS.length)].name,
-  };
+  return { name: pick(NAMES), city: pick(CITIES), product: pick(KITS).name };
 }
 
 /** Aviso de compra recente no canto inferior esquerdo — fixo, pequeno, não cobre os produtos. */
