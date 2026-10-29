@@ -1,3 +1,4 @@
+import { track } from "@/lib/track";
 import { useSyncExternalStore } from "react";
 
 /** Carrinho guardado no navegador: { slug: quantidade }. */
@@ -32,7 +33,7 @@ export function setQty(slug: string, qty: number) {
   write(next);
 }
 
-export const addToCart = (slug: string) => setQty(slug, (read()[slug] ?? 0) + 1);
+export const addToCart = (slug: string) => { setQty(slug, (read()[slug] ?? 0) + 1); void track("add_to_cart", { slug }); };
 export const clearCart = () => write({});
 
 export function useCart(): Cart {

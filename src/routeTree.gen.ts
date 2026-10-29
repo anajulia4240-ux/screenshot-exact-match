@@ -24,6 +24,7 @@ import { Route as AuthenticatedSecurityRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedVisitorsRouteImport } from './routes/_authenticated/visitors'
 import { Route as ApiPublicOrdersRouteImport } from './routes/api/public/orders'
+import { Route as ApiPublicTrackRouteImport } from './routes/api/public/track'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -99,6 +100,11 @@ const ApiPublicOrdersRoute = ApiPublicOrdersRouteImport.update({
   path: '/api/public/orders',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicTrackRoute = ApiPublicTrackRouteImport.update({
+  id: '/api/public/track',
+  path: '/api/public/track',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -115,6 +121,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRoute
   '/visitors': typeof AuthenticatedVisitorsRoute
   '/api/public/orders': typeof ApiPublicOrdersRoute
+  '/api/public/track': typeof ApiPublicTrackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -131,6 +138,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRoute
   '/visitors': typeof AuthenticatedVisitorsRoute
   '/api/public/orders': typeof ApiPublicOrdersRoute
+  '/api/public/track': typeof ApiPublicTrackRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -149,6 +157,7 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/visitors': typeof AuthenticatedVisitorsRoute
   '/api/public/orders': typeof ApiPublicOrdersRoute
+  '/api/public/track': typeof ApiPublicTrackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -167,6 +176,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/visitors'
     | '/api/public/orders'
+    | '/api/public/track'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -183,6 +193,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/visitors'
     | '/api/public/orders'
+    | '/api/public/track'
   id:
     | '__root__'
     | '/'
@@ -200,6 +211,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/_authenticated/visitors'
     | '/api/public/orders'
+    | '/api/public/track'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -209,6 +221,7 @@ export interface RootRouteChildren {
   CheckoutRoute: typeof CheckoutRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   ApiPublicOrdersRoute: typeof ApiPublicOrdersRoute
+  ApiPublicTrackRoute: typeof ApiPublicTrackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -318,6 +331,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicOrdersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/track': {
+      id: '/api/public/track'
+      path: '/api/public/track'
+      fullPath: '/api/public/track'
+      preLoaderRoute: typeof ApiPublicTrackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -355,6 +375,7 @@ const rootRouteChildren: RootRouteChildren = {
   CheckoutRoute: CheckoutRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   ApiPublicOrdersRoute: ApiPublicOrdersRoute,
+  ApiPublicTrackRoute: ApiPublicTrackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
