@@ -13,16 +13,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as AuthenticatedAutomationsRouteImport } from './routes/_authenticated/automations'
-import { Route as AuthenticatedCampaignsRouteImport } from './routes/_authenticated/campaigns'
-import { Route as AuthenticatedContactsRouteImport } from './routes/_authenticated/contacts'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedEmailRouteImport } from './routes/_authenticated/email'
-import { Route as AuthenticatedIntegrationsRouteImport } from './routes/_authenticated/integrations'
-import { Route as AuthenticatedListsRouteImport } from './routes/_authenticated/lists'
-import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
-import { Route as AuthenticatedWhatsappRouteImport } from './routes/_authenticated/whatsapp'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -43,46 +35,9 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedAutomationsRoute =
-  AuthenticatedAutomationsRouteImport.update({
-    id: '/automations',
-    path: '/automations',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedCampaignsRoute = AuthenticatedCampaignsRouteImport.update({
-  id: '/campaigns',
-  path: '/campaigns',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedContactsRoute = AuthenticatedContactsRouteImport.update({
-  id: '/contacts',
-  path: '/contacts',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedEmailRoute = AuthenticatedEmailRouteImport.update({
-  id: '/email',
-  path: '/email',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedIntegrationsRoute =
-  AuthenticatedIntegrationsRouteImport.update({
-    id: '/integrations',
-    path: '/integrations',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedListsRoute = AuthenticatedListsRouteImport.update({
-  id: '/lists',
-  path: '/lists',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
-  id: '/reports',
-  path: '/reports',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
@@ -90,41 +45,20 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedWhatsappRoute = AuthenticatedWhatsappRouteImport.update({
-  id: '/whatsapp',
-  path: '/whatsapp',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/automations': typeof AuthenticatedAutomationsRoute
-  '/campaigns': typeof AuthenticatedCampaignsRoute
-  '/contacts': typeof AuthenticatedContactsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/email': typeof AuthenticatedEmailRoute
-  '/integrations': typeof AuthenticatedIntegrationsRoute
-  '/lists': typeof AuthenticatedListsRoute
-  '/reports': typeof AuthenticatedReportsRoute
   '/settings': typeof AuthenticatedSettingsRoute
-  '/whatsapp': typeof AuthenticatedWhatsappRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/automations': typeof AuthenticatedAutomationsRoute
-  '/campaigns': typeof AuthenticatedCampaignsRoute
-  '/contacts': typeof AuthenticatedContactsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/email': typeof AuthenticatedEmailRoute
-  '/integrations': typeof AuthenticatedIntegrationsRoute
-  '/lists': typeof AuthenticatedListsRoute
-  '/reports': typeof AuthenticatedReportsRoute
   '/settings': typeof AuthenticatedSettingsRoute
-  '/whatsapp': typeof AuthenticatedWhatsappRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -132,64 +66,22 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/_authenticated/automations': typeof AuthenticatedAutomationsRoute
-  '/_authenticated/campaigns': typeof AuthenticatedCampaignsRoute
-  '/_authenticated/contacts': typeof AuthenticatedContactsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
-  '/_authenticated/email': typeof AuthenticatedEmailRoute
-  '/_authenticated/integrations': typeof AuthenticatedIntegrationsRoute
-  '/_authenticated/lists': typeof AuthenticatedListsRoute
-  '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
-  '/_authenticated/whatsapp': typeof AuthenticatedWhatsappRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/'
-    | '/auth'
-    | '/reset-password'
-    | '/automations'
-    | '/campaigns'
-    | '/contacts'
-    | '/dashboard'
-    | '/email'
-    | '/integrations'
-    | '/lists'
-    | '/reports'
-    | '/settings'
-    | '/whatsapp'
+  fullPaths: '/' | '/auth' | '/reset-password' | '/dashboard' | '/settings'
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/auth'
-    | '/reset-password'
-    | '/automations'
-    | '/campaigns'
-    | '/contacts'
-    | '/dashboard'
-    | '/email'
-    | '/integrations'
-    | '/lists'
-    | '/reports'
-    | '/settings'
-    | '/whatsapp'
+  to: '/' | '/auth' | '/reset-password' | '/dashboard' | '/settings'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
     | '/reset-password'
-    | '/_authenticated/automations'
-    | '/_authenticated/campaigns'
-    | '/_authenticated/contacts'
     | '/_authenticated/dashboard'
-    | '/_authenticated/email'
-    | '/_authenticated/integrations'
-    | '/_authenticated/lists'
-    | '/_authenticated/reports'
     | '/_authenticated/settings'
-    | '/_authenticated/whatsapp'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -229,60 +121,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/automations': {
-      id: '/_authenticated/automations'
-      path: '/automations'
-      fullPath: '/automations'
-      preLoaderRoute: typeof AuthenticatedAutomationsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/campaigns': {
-      id: '/_authenticated/campaigns'
-      path: '/campaigns'
-      fullPath: '/campaigns'
-      preLoaderRoute: typeof AuthenticatedCampaignsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/contacts': {
-      id: '/_authenticated/contacts'
-      path: '/contacts'
-      fullPath: '/contacts'
-      preLoaderRoute: typeof AuthenticatedContactsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/email': {
-      id: '/_authenticated/email'
-      path: '/email'
-      fullPath: '/email'
-      preLoaderRoute: typeof AuthenticatedEmailRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/integrations': {
-      id: '/_authenticated/integrations'
-      path: '/integrations'
-      fullPath: '/integrations'
-      preLoaderRoute: typeof AuthenticatedIntegrationsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/lists': {
-      id: '/_authenticated/lists'
-      path: '/lists'
-      fullPath: '/lists'
-      preLoaderRoute: typeof AuthenticatedListsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/reports': {
-      id: '/_authenticated/reports'
-      path: '/reports'
-      fullPath: '/reports'
-      preLoaderRoute: typeof AuthenticatedReportsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/settings': {
@@ -292,40 +135,17 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/whatsapp': {
-      id: '/_authenticated/whatsapp'
-      path: '/whatsapp'
-      fullPath: '/whatsapp'
-      preLoaderRoute: typeof AuthenticatedWhatsappRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
-  AuthenticatedAutomationsRoute: typeof AuthenticatedAutomationsRoute
-  AuthenticatedCampaignsRoute: typeof AuthenticatedCampaignsRoute
-  AuthenticatedContactsRoute: typeof AuthenticatedContactsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
-  AuthenticatedEmailRoute: typeof AuthenticatedEmailRoute
-  AuthenticatedIntegrationsRoute: typeof AuthenticatedIntegrationsRoute
-  AuthenticatedListsRoute: typeof AuthenticatedListsRoute
-  AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
-  AuthenticatedWhatsappRoute: typeof AuthenticatedWhatsappRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedAutomationsRoute: AuthenticatedAutomationsRoute,
-  AuthenticatedCampaignsRoute: AuthenticatedCampaignsRoute,
-  AuthenticatedContactsRoute: AuthenticatedContactsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
-  AuthenticatedEmailRoute: AuthenticatedEmailRoute,
-  AuthenticatedIntegrationsRoute: AuthenticatedIntegrationsRoute,
-  AuthenticatedListsRoute: AuthenticatedListsRoute,
-  AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
-  AuthenticatedWhatsappRoute: AuthenticatedWhatsappRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

@@ -556,6 +556,78 @@ export type Database = {
           },
         ]
       }
+      god_messages: {
+        Row: {
+          created_at: string
+          id: string
+          sender: string
+          session_id: string
+          text: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          sender: string
+          session_id: string
+          text: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          sender?: string
+          session_id?: string
+          text?: string
+        }
+        Relationships: []
+      }
+      god_sessions: {
+        Row: {
+          admin_message: string | null
+          created_at: string
+          current_page: string | null
+          id: string
+          ip: string | null
+          last_seen_at: string
+          locked: boolean
+          mirror_on: boolean
+          name: string | null
+          phone: string | null
+          session_id: string
+          updated_at: string
+          user_agent: string | null
+        }
+        Insert: {
+          admin_message?: string | null
+          created_at?: string
+          current_page?: string | null
+          id?: string
+          ip?: string | null
+          last_seen_at?: string
+          locked?: boolean
+          mirror_on?: boolean
+          name?: string | null
+          phone?: string | null
+          session_id: string
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Update: {
+          admin_message?: string | null
+          created_at?: string
+          current_page?: string | null
+          id?: string
+          ip?: string | null
+          last_seen_at?: string
+          locked?: boolean
+          mirror_on?: boolean
+          name?: string | null
+          phone?: string | null
+          session_id?: string
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           city: string | null
