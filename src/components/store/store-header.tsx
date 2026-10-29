@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { useEffect, useRef, useState } from "react";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { track } from "@/lib/track";
 import { toast } from "sonner";
 import { Facebook, Instagram, ShoppingBag, Youtube } from "lucide-react";
 import { useCart } from "@/lib/cart";
@@ -8,6 +9,17 @@ import { Button } from "@/components/ui/button";
 export function StoreHeader() {
   const cart = useCart();
   const count = Object.values(cart).reduce((a, b) => a + b, 0);
+  const navigate = useNavigate();
+  const clicks = useRef<{ n: number; t: number }>({ n: 0, t: 0 });
+  useEffect(() => { void track("page_view"); }, []);
+  // 3 cliques rápidos no nome abrem o login do painel (que pede a senha).
+  const onLogo = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const now = Date.now();
+    clicks.current = now - clicks.current.t < 600 ? { n: clicks.current.n + 1, t: now } : { n: 1, t: now };
+    if (clicks.current.n >= 3) { clicks.current = { n: 0, t: 0 }; void navigate({ to: "/auth" }); }
+    else if (window.location.pathname !== "/") window.setTimeout(() => { if (clicks.current.n === 1) void navigate({ to: "/" }); }, 650);
+  };
   return (
     <>
       <div className="bg-primary py-2 text-center text-xs font-medium text-primary-foreground">
@@ -15,7 +27,7 @@ export function StoreHeader() {
       </div>
       <header className="sticky top-0 z-20 border-b bg-card/95 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
-          <Link to="/" className="text-2xl font-bold tracking-tight text-primary">byhappy</Link>
+          <Link to="/" onClick={onLogo} className="select-none text-2xl font-bold tracking-tight text-primary">byhappy</Link>
           <Link to="/checkout" className="relative inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium hover:bg-accent" aria-label="Abrir carrinho">
             <ShoppingBag className="h-4 w-4" /> Carrinho
             {count > 0 && <span className="rounded-full bg-primary px-2 text-xs text-primary-foreground">{count}</span>}

@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { track } from "@/lib/track";
 import { Loader2, Minus, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { findProduct } from "@/lib/catalog";
@@ -30,6 +31,8 @@ function CheckoutPage() {
   const [done, setDone] = useState<number | null>(null);
   const lines = Object.entries(cart).flatMap(([slug, qty]) => { const p = findProduct(slug); return p ? [{ p, qty }] : []; });
   const total = lines.reduce((s, l) => s + l.p.price * l.qty, 0);
+  const filling = useRef(false);
+  useEffect(() => { void track("checkout_opened"); }, []);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -42,6 +45,7 @@ function CheckoutPage() {
       });
       const json = (await res.json()) as { total_cents?: number; error?: string };
       if (!res.ok) throw new Error(json.error ?? "Erro ao enviar pedido.");
+      void track("pix_generated", { value_cents: json.total_cents ?? total, name: form.name });
       setDone(json.total_cents ?? total);
       clearCart();
     } catch (err) {
@@ -81,7 +85,7 @@ function CheckoutPage() {
                 </li>
               ))}
             </ul>
-            <form onSubmit={submit} className="space-y-3 rounded-xl border bg-card p-4">
+            <form onSubmit={submit} onInput={() => { if (!filling.current) { filling.current = true; void track("checkout_filling"); } }} className="space-y-3 rounded-xl border bg-card p-4">
               <p className="text-lg font-bold">Total: {brl(total)}</p>
               <Input required placeholder="Nome completo" aria-label="Nome" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
               <Input required placeholder="WhatsApp" aria-label="WhatsApp" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
