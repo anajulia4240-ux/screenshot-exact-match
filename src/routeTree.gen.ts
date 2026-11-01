@@ -23,7 +23,12 @@ import { Route as AuthenticatedOrdersRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedSecurityRouteImport } from './routes/_authenticated/security'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedVisitorsRouteImport } from './routes/_authenticated/visitors'
+import { Route as ApiPublicCouponRouteImport } from './routes/api/public/coupon'
+import { Route as ApiPublicLeadRouteImport } from './routes/api/public/lead'
 import { Route as ApiPublicOrdersRouteImport } from './routes/api/public/orders'
+import { Route as ApiPublicPaymentWebhookRouteImport } from './routes/api/public/payment-webhook'
+import { Route as ApiPublicPixRouteImport } from './routes/api/public/pix'
+import { Route as ApiPublicPixStatusRouteImport } from './routes/api/public/pix-status'
 import { Route as ApiPublicTrackRouteImport } from './routes/api/public/track'
 
 const IndexRoute = IndexRouteImport.update({
@@ -95,9 +100,34 @@ const AuthenticatedVisitorsRoute = AuthenticatedVisitorsRouteImport.update({
   path: '/visitors',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiPublicCouponRoute = ApiPublicCouponRouteImport.update({
+  id: '/api/public/coupon',
+  path: '/api/public/coupon',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicLeadRoute = ApiPublicLeadRouteImport.update({
+  id: '/api/public/lead',
+  path: '/api/public/lead',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicOrdersRoute = ApiPublicOrdersRouteImport.update({
   id: '/api/public/orders',
   path: '/api/public/orders',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicPaymentWebhookRoute = ApiPublicPaymentWebhookRouteImport.update({
+  id: '/api/public/payment-webhook',
+  path: '/api/public/payment-webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicPixRoute = ApiPublicPixRouteImport.update({
+  id: '/api/public/pix',
+  path: '/api/public/pix',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicPixStatusRoute = ApiPublicPixStatusRouteImport.update({
+  id: '/api/public/pix-status',
+  path: '/api/public/pix-status',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicTrackRoute = ApiPublicTrackRouteImport.update({
@@ -120,7 +150,12 @@ export interface FileRoutesByFullPath {
   '/security': typeof AuthenticatedSecurityRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/visitors': typeof AuthenticatedVisitorsRoute
+  '/api/public/coupon': typeof ApiPublicCouponRoute
+  '/api/public/lead': typeof ApiPublicLeadRoute
   '/api/public/orders': typeof ApiPublicOrdersRoute
+  '/api/public/payment-webhook': typeof ApiPublicPaymentWebhookRoute
+  '/api/public/pix': typeof ApiPublicPixRoute
+  '/api/public/pix-status': typeof ApiPublicPixStatusRoute
   '/api/public/track': typeof ApiPublicTrackRoute
 }
 export interface FileRoutesByTo {
@@ -137,7 +172,12 @@ export interface FileRoutesByTo {
   '/security': typeof AuthenticatedSecurityRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/visitors': typeof AuthenticatedVisitorsRoute
+  '/api/public/coupon': typeof ApiPublicCouponRoute
+  '/api/public/lead': typeof ApiPublicLeadRoute
   '/api/public/orders': typeof ApiPublicOrdersRoute
+  '/api/public/payment-webhook': typeof ApiPublicPaymentWebhookRoute
+  '/api/public/pix': typeof ApiPublicPixRoute
+  '/api/public/pix-status': typeof ApiPublicPixStatusRoute
   '/api/public/track': typeof ApiPublicTrackRoute
 }
 export interface FileRoutesById {
@@ -156,7 +196,12 @@ export interface FileRoutesById {
   '/_authenticated/security': typeof AuthenticatedSecurityRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/visitors': typeof AuthenticatedVisitorsRoute
+  '/api/public/coupon': typeof ApiPublicCouponRoute
+  '/api/public/lead': typeof ApiPublicLeadRoute
   '/api/public/orders': typeof ApiPublicOrdersRoute
+  '/api/public/payment-webhook': typeof ApiPublicPaymentWebhookRoute
+  '/api/public/pix': typeof ApiPublicPixRoute
+  '/api/public/pix-status': typeof ApiPublicPixStatusRoute
   '/api/public/track': typeof ApiPublicTrackRoute
 }
 export interface FileRouteTypes {
@@ -175,7 +220,12 @@ export interface FileRouteTypes {
     | '/security'
     | '/settings'
     | '/visitors'
+    | '/api/public/coupon'
+    | '/api/public/lead'
     | '/api/public/orders'
+    | '/api/public/payment-webhook'
+    | '/api/public/pix'
+    | '/api/public/pix-status'
     | '/api/public/track'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -192,7 +242,12 @@ export interface FileRouteTypes {
     | '/security'
     | '/settings'
     | '/visitors'
+    | '/api/public/coupon'
+    | '/api/public/lead'
     | '/api/public/orders'
+    | '/api/public/payment-webhook'
+    | '/api/public/pix'
+    | '/api/public/pix-status'
     | '/api/public/track'
   id:
     | '__root__'
@@ -210,7 +265,12 @@ export interface FileRouteTypes {
     | '/_authenticated/security'
     | '/_authenticated/settings'
     | '/_authenticated/visitors'
+    | '/api/public/coupon'
+    | '/api/public/lead'
     | '/api/public/orders'
+    | '/api/public/payment-webhook'
+    | '/api/public/pix'
+    | '/api/public/pix-status'
     | '/api/public/track'
   fileRoutesById: FileRoutesById
 }
@@ -220,7 +280,12 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   CheckoutRoute: typeof CheckoutRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  ApiPublicCouponRoute: typeof ApiPublicCouponRoute
+  ApiPublicLeadRoute: typeof ApiPublicLeadRoute
   ApiPublicOrdersRoute: typeof ApiPublicOrdersRoute
+  ApiPublicPaymentWebhookRoute: typeof ApiPublicPaymentWebhookRoute
+  ApiPublicPixRoute: typeof ApiPublicPixRoute
+  ApiPublicPixStatusRoute: typeof ApiPublicPixStatusRoute
   ApiPublicTrackRoute: typeof ApiPublicTrackRoute
 }
 
@@ -324,11 +389,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedVisitorsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/coupon': {
+      id: '/api/public/coupon'
+      path: '/api/public/coupon'
+      fullPath: '/api/public/coupon'
+      preLoaderRoute: typeof ApiPublicCouponRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/lead': {
+      id: '/api/public/lead'
+      path: '/api/public/lead'
+      fullPath: '/api/public/lead'
+      preLoaderRoute: typeof ApiPublicLeadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/orders': {
       id: '/api/public/orders'
       path: '/api/public/orders'
       fullPath: '/api/public/orders'
       preLoaderRoute: typeof ApiPublicOrdersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/payment-webhook': {
+      id: '/api/public/payment-webhook'
+      path: '/api/public/payment-webhook'
+      fullPath: '/api/public/payment-webhook'
+      preLoaderRoute: typeof ApiPublicPaymentWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/pix': {
+      id: '/api/public/pix'
+      path: '/api/public/pix'
+      fullPath: '/api/public/pix'
+      preLoaderRoute: typeof ApiPublicPixRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/pix-status': {
+      id: '/api/public/pix-status'
+      path: '/api/public/pix-status'
+      fullPath: '/api/public/pix-status'
+      preLoaderRoute: typeof ApiPublicPixStatusRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/track': {
@@ -374,7 +474,12 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   CheckoutRoute: CheckoutRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  ApiPublicCouponRoute: ApiPublicCouponRoute,
+  ApiPublicLeadRoute: ApiPublicLeadRoute,
   ApiPublicOrdersRoute: ApiPublicOrdersRoute,
+  ApiPublicPaymentWebhookRoute: ApiPublicPaymentWebhookRoute,
+  ApiPublicPixRoute: ApiPublicPixRoute,
+  ApiPublicPixStatusRoute: ApiPublicPixStatusRoute,
   ApiPublicTrackRoute: ApiPublicTrackRoute,
 }
 export const routeTree = rootRouteImport
