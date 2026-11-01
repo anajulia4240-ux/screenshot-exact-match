@@ -5,6 +5,6 @@
 - [ ] Loja: cupom funcionando no checkout (hoje o cupom existe mas não muda o preço)
 - [ ] Loja: tela de bloqueio (IP bloqueado no painel ainda consegue navegar e comprar)
 - [ ] Loja: cidade e país do visitante (coluna existe, mas chega vazia)
-- [ ] Loja: integrar Fruitfy para PIX automático com QR Code e confirmação de pagamento (token, Store-Id e produto de cobrança comum salvos; verificação /api/me retornou HTTP 500; bloqueado pela ausência do contrato de resposta PIX na documentação fornecida)
+- [ ] Loja: integrar Fruitfy para PIX automático com QR Code e confirmação de pagamento (token, Store-Id e produto de cobrança comum salvos; verificação anterior /api/me retornou HTTP 500; complemento recebido confirma nome, e-mail, telefone, CPF e itens obrigatórios, mas não inclui o corpo da resposta 201; documentação oficial exige login e não descreve autenticação do webhook nos trechos fornecidos; bloqueado pelo contrato de retorno do PIX e verificação segura da confirmação)
 - [ ] Modo Deus: espelho da tela do visitante e tela de atendimento no site
 - [ ] Aba CPU / Recursos
