@@ -15,6 +15,8 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
 import { META_PIXEL_ID, captureTestEventCode, fbqTrack } from "@/lib/fbq";
+import { applyPriceOverrides, type PriceMap } from "@/lib/catalog";
+import { getPublicPrices } from "@/lib/prices.functions";
 
 const UTMIFY_PIXEL_ID = "6ae9f434e4625a333942a594";
 
@@ -98,6 +100,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
     ],
   }),
+  // Preços definidos na aba Preços do painel (cache de 1 min).
+  loader: async (): Promise<PriceMap> => getPublicPrices().catch(() => ({})),
+  staleTime: 60_000,
   shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
@@ -119,6 +124,8 @@ function RootShell({ children }: { children: ReactNode }) {
 }
 
 function RootComponent() {
+  // Aplica os preços do painel antes de renderizar a loja (SSR e navegação).
+  applyPriceOverrides(Route.useLoaderData() ?? {});
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
 
