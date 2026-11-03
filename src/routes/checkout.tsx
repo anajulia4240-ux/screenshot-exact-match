@@ -479,7 +479,7 @@ function CheckoutPage() {
         aria-expanded={summaryOpen}
       >
         <span className="flex items-center gap-2 text-sm font-bold md:text-base">
-          <span className="md:hidden">{summaryOpen ? "Ocultar resumo" : "Ver resumo do pedido"}</span>
+          <span className="md:hidden">{summaryOpen ? "Ocultar resumo" : "Ver resumo"}</span>
           <span className="hidden md:inline">Resumo do pedido</span>
           <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-bold text-primary">
             {itemCount} {itemCount === 1 ? "item" : "itens"}
