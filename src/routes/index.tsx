@@ -253,7 +253,7 @@ function StorePage() {
         <p className="mt-1.5 text-sm text-muted-foreground sm:mt-2 sm:text-base">Quanto maior o kit, maior o desconto — até 80% off.</p>
       </section>
       <main className="mx-auto max-w-6xl px-4 pb-6">
-        <h2 id="kits" className="mb-3 scroll-mt-20 text-lg font-bold sm:mb-4 sm:text-xl">Kits em destaque</h2>
+        <h2 id="kits" className="mb-3 scroll-mt-28 text-lg font-bold sm:mb-4 sm:text-xl">Kits em destaque</h2>
         <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
           {KITS.map((p) => <ProductCard key={p.slug} p={p} badge={badgeFor(p.slug)} />)}
         </div>
