@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as CheckoutRouteImport } from './routes/checkout'
+import { Route as RastreioRouteImport } from './routes/rastreio'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedCouponsRouteImport } from './routes/_authenticated/coupons'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -29,6 +30,7 @@ import { Route as ApiPublicOrdersRouteImport } from './routes/api/public/orders'
 import { Route as ApiPublicPaymentWebhookRouteImport } from './routes/api/public/payment-webhook'
 import { Route as ApiPublicPixRouteImport } from './routes/api/public/pix'
 import { Route as ApiPublicPixStatusRouteImport } from './routes/api/public/pix-status'
+import { Route as ApiPublicRastreioRouteImport } from './routes/api/public/rastreio'
 import { Route as ApiPublicTrackRouteImport } from './routes/api/public/track'
 
 const IndexRoute = IndexRouteImport.update({
@@ -48,6 +50,11 @@ const AuthRoute = AuthRouteImport.update({
 const CheckoutRoute = CheckoutRouteImport.update({
   id: '/checkout',
   path: '/checkout',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RastreioRoute = RastreioRouteImport.update({
+  id: '/rastreio',
+  path: '/rastreio',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -130,6 +137,11 @@ const ApiPublicPixStatusRoute = ApiPublicPixStatusRouteImport.update({
   path: '/api/public/pix-status',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicRastreioRoute = ApiPublicRastreioRouteImport.update({
+  id: '/api/public/rastreio',
+  path: '/api/public/rastreio',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicTrackRoute = ApiPublicTrackRouteImport.update({
   id: '/api/public/track',
   path: '/api/public/track',
@@ -140,6 +152,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/checkout': typeof CheckoutRoute
+  '/rastreio': typeof RastreioRoute
   '/reset-password': typeof ResetPasswordRoute
   '/coupons': typeof AuthenticatedCouponsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -156,12 +169,14 @@ export interface FileRoutesByFullPath {
   '/api/public/payment-webhook': typeof ApiPublicPaymentWebhookRoute
   '/api/public/pix': typeof ApiPublicPixRoute
   '/api/public/pix-status': typeof ApiPublicPixStatusRoute
+  '/api/public/rastreio': typeof ApiPublicRastreioRoute
   '/api/public/track': typeof ApiPublicTrackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/checkout': typeof CheckoutRoute
+  '/rastreio': typeof RastreioRoute
   '/reset-password': typeof ResetPasswordRoute
   '/coupons': typeof AuthenticatedCouponsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -178,6 +193,7 @@ export interface FileRoutesByTo {
   '/api/public/payment-webhook': typeof ApiPublicPaymentWebhookRoute
   '/api/public/pix': typeof ApiPublicPixRoute
   '/api/public/pix-status': typeof ApiPublicPixStatusRoute
+  '/api/public/rastreio': typeof ApiPublicRastreioRoute
   '/api/public/track': typeof ApiPublicTrackRoute
 }
 export interface FileRoutesById {
@@ -186,6 +202,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/checkout': typeof CheckoutRoute
+  '/rastreio': typeof RastreioRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/coupons': typeof AuthenticatedCouponsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
@@ -202,6 +219,7 @@ export interface FileRoutesById {
   '/api/public/payment-webhook': typeof ApiPublicPaymentWebhookRoute
   '/api/public/pix': typeof ApiPublicPixRoute
   '/api/public/pix-status': typeof ApiPublicPixStatusRoute
+  '/api/public/rastreio': typeof ApiPublicRastreioRoute
   '/api/public/track': typeof ApiPublicTrackRoute
 }
 export interface FileRouteTypes {
@@ -210,6 +228,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/checkout'
+    | '/rastreio'
     | '/reset-password'
     | '/coupons'
     | '/dashboard'
@@ -226,12 +245,14 @@ export interface FileRouteTypes {
     | '/api/public/payment-webhook'
     | '/api/public/pix'
     | '/api/public/pix-status'
+    | '/api/public/rastreio'
     | '/api/public/track'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
     | '/checkout'
+    | '/rastreio'
     | '/reset-password'
     | '/coupons'
     | '/dashboard'
@@ -248,6 +269,7 @@ export interface FileRouteTypes {
     | '/api/public/payment-webhook'
     | '/api/public/pix'
     | '/api/public/pix-status'
+    | '/api/public/rastreio'
     | '/api/public/track'
   id:
     | '__root__'
@@ -255,6 +277,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/checkout'
+    | '/rastreio'
     | '/reset-password'
     | '/_authenticated/coupons'
     | '/_authenticated/dashboard'
@@ -271,6 +294,7 @@ export interface FileRouteTypes {
     | '/api/public/payment-webhook'
     | '/api/public/pix'
     | '/api/public/pix-status'
+    | '/api/public/rastreio'
     | '/api/public/track'
   fileRoutesById: FileRoutesById
 }
@@ -279,6 +303,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   CheckoutRoute: typeof CheckoutRoute
+  RastreioRoute: typeof RastreioRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   ApiPublicCouponRoute: typeof ApiPublicCouponRoute
   ApiPublicLeadRoute: typeof ApiPublicLeadRoute
@@ -286,6 +311,7 @@ export interface RootRouteChildren {
   ApiPublicPaymentWebhookRoute: typeof ApiPublicPaymentWebhookRoute
   ApiPublicPixRoute: typeof ApiPublicPixRoute
   ApiPublicPixStatusRoute: typeof ApiPublicPixStatusRoute
+  ApiPublicRastreioRoute: typeof ApiPublicRastreioRoute
   ApiPublicTrackRoute: typeof ApiPublicTrackRoute
 }
 
@@ -317,6 +343,13 @@ declare module '@tanstack/react-router' {
       path: '/checkout'
       fullPath: '/checkout'
       preLoaderRoute: typeof CheckoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rastreio': {
+      id: '/rastreio'
+      path: '/rastreio'
+      fullPath: '/rastreio'
+      preLoaderRoute: typeof RastreioRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -431,6 +464,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPixStatusRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/rastreio': {
+      id: '/api/public/rastreio'
+      path: '/api/public/rastreio'
+      fullPath: '/api/public/rastreio'
+      preLoaderRoute: typeof ApiPublicRastreioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/track': {
       id: '/api/public/track'
       path: '/api/public/track'
@@ -473,6 +513,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   CheckoutRoute: CheckoutRoute,
+  RastreioRoute: RastreioRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   ApiPublicCouponRoute: ApiPublicCouponRoute,
   ApiPublicLeadRoute: ApiPublicLeadRoute,
@@ -480,6 +521,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicPaymentWebhookRoute: ApiPublicPaymentWebhookRoute,
   ApiPublicPixRoute: ApiPublicPixRoute,
   ApiPublicPixStatusRoute: ApiPublicPixStatusRoute,
+  ApiPublicRastreioRoute: ApiPublicRastreioRoute,
   ApiPublicTrackRoute: ApiPublicTrackRoute,
 }
 export const routeTree = rootRouteImport
