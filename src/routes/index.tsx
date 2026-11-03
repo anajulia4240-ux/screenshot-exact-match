@@ -108,7 +108,7 @@ function ProductCard({ p, badge }: { p: Product; badge?: "recommended" | "best" 
 function KitChooser({ recommended }: { recommended: string }) {
   const kits = [...KITS].sort((a, b) => a.days - b.days);
   return (
-    <section className="mx-auto max-w-6xl px-4 py-10 sm:py-12">
+    <section id="tratamentos" className="mx-auto max-w-6xl scroll-mt-28 px-4 py-10 sm:py-12">
       <div className="mx-auto max-w-2xl text-center">
         <h2 className="text-2xl font-extrabold md:text-3xl">Qual kit é ideal pra você?</h2>
         <p className="mt-2 text-sm text-muted-foreground md:text-base">
@@ -265,8 +265,10 @@ function StorePage() {
           {AVULSOS.map((p) => <ProductCard key={p.slug} p={p} />)}
         </div>
       </section>
-      <VideoSection />
-      <ReviewsSection />
+      <div id="resultados" className="scroll-mt-28">
+        <VideoSection />
+        <ReviewsSection />
+      </div>
       <Faq />
       <StoreFooter />
       <SocialProof />
