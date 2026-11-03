@@ -137,11 +137,12 @@ function Section({
 }) {
   return (
     <section
-      className={`overflow-hidden rounded-2xl border bg-card transition-shadow ${
+      id={`etapa-${n}`}
+      className={`scroll-mt-3 overflow-hidden rounded-2xl border bg-card transition-shadow ${
         active ? "border-primary/40 shadow-lg shadow-primary/5 ring-1 ring-primary/10" : "shadow-sm"
       }`}
     >
-      <div className="flex items-center gap-3 px-4 py-4 sm:px-6">
+      <div className={`flex items-center gap-3 px-4 sm:px-6 ${done ? "py-3" : "py-4"}`}>
         <span
           className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
             done
@@ -176,7 +177,7 @@ function Section({
         )}
       </div>
       {done && summary && (
-        <div className="-mt-1 space-y-0.5 px-4 pb-4 pl-[3.75rem] text-sm text-muted-foreground sm:px-6 sm:pl-[4.25rem]">
+        <div className="-mt-2 space-y-0.5 px-4 pb-3 pl-[3.75rem] text-xs text-muted-foreground sm:px-6 sm:pl-[4.25rem] sm:text-[13px]">
           {summary}
         </div>
       )}
@@ -251,7 +252,12 @@ function CheckoutPage() {
   const goto = (n: number) => {
     setStep(n);
     void track("checkout_step", { step: n + 1 });
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    // Leva o cliente direto para a etapa atual (as anteriores ficam resumidas acima).
+    window.setTimeout(() => {
+      const el = n > 0 ? document.getElementById(`etapa-${n + 1}`) : null;
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      else window.scrollTo({ top: 0, behavior: "smooth" });
+    }, 60);
   };
 
   function applySaved() {
@@ -701,9 +707,8 @@ function CheckoutPage() {
             onEdit={() => goto(0)}
             summary={
               <>
-                <p className="font-semibold text-foreground">{customer.name}</p>
-                <p>{customer.email}</p>
-                <p>{maskPhone(customer.phone)} • CPF {maskCpf(customer.cpf)}</p>
+                <p className="truncate"><span className="font-semibold text-foreground">{customer.name}</span> • {customer.email}</p>
+                <p className="truncate">{maskPhone(customer.phone)} • CPF {maskCpf(customer.cpf)}</p>
               </>
             }
           >
@@ -777,13 +782,12 @@ function CheckoutPage() {
             onEdit={() => goto(1)}
             summary={
               <>
-                <p className="font-semibold text-foreground">
-                  {address.street}, {address.number}
-                  {address.complement ? ` - ${address.complement}` : ""}
-                </p>
-                <p>
-                  {address.neighborhood ? `${address.neighborhood} • ` : ""}
-                  {address.city}/{address.state} • {maskCep(address.cep)}
+                <p className="truncate">
+                  <span className="font-semibold text-foreground">
+                    {address.street}, {address.number}
+                    {address.complement ? ` - ${address.complement}` : ""}
+                  </span>{" "}
+                  • {address.city}/{address.state} • {maskCep(address.cep)}
                 </p>
                 <p className="text-success">
                   {shipOpt.name} • Grátis • {arrivalLabel(shipOpt)}
