@@ -16,7 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
 import { META_PIXEL_ID, captureTestEventCode, fbqTrack } from "@/lib/fbq";
 
-const UTMIFY_PIXEL_ID = "6a0380c04ebb211fb4d632fe";
+const UTMIFY_PIXEL_ID = "6ae9f434e4625a333942a594";
 
 function NotFoundComponent() {
   return (
