@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import { getSessionId, getTracking, track } from "@/lib/track";
 import { fbqIdentify, fbqTrack, getTestEventCode, purchaseOnce } from "@/lib/fbq";
 import {
+  ArrowLeft,
+  ArrowRight,
   Check,
   ChevronDown,
   CheckCircle2,
@@ -20,6 +22,8 @@ import {
   Headphones,
   KeyRound,
   QrCode,
+  Zap,
+  CreditCard,
 } from "lucide-react";
 import { toast } from "sonner";
 import { findProduct } from "@/lib/catalog";
@@ -31,7 +35,6 @@ import { SHIPPING, arrivalLabel, type ShippingId } from "@/lib/shipping";
 import correiosLogo from "@/assets/correios-logo.png.asset.json";
 import jadlogLogo from "@/assets/jadlog-logo.png.asset.json";
 import { Input } from "@/components/ui/input";
-import { StoreFooter, StoreHeader } from "@/components/store/store-header";
 
 export const Route = createFileRoute("/checkout")({
   head: () => ({
@@ -83,6 +86,9 @@ const EMPTY_ADDRESS: Address = {
   state: "",
 };
 
+/** Estilo padrão dos campos do checkout. */
+const FIELD = "h-11 rounded-xl bg-background text-[15px] shadow-none focus-visible:ring-primary/30";
+
 function loadSaved(): { customer: Customer; address: Address } | null {
   try {
     const v = JSON.parse(localStorage.getItem(CUSTOMER_KEY) || "null") as {
@@ -107,22 +113,95 @@ function save(customer: Customer, address: Address) {
   }
 }
 
-function Steps({ step }: { step: number }) {
-  const labels = ["Identificação", "Entrega", "Pagamento"];
+/** Bloco de etapa no estilo "sanfona": aberto quando ativo, resumo quando concluído. */
+function Section({
+  n,
+  title,
+  subtitle,
+  icon: Icon,
+  active,
+  done,
+  onEdit,
+  summary,
+  children,
+}: {
+  n: number;
+  title: string;
+  subtitle?: string;
+  icon: typeof User;
+  active: boolean;
+  done: boolean;
+  onEdit?: () => void;
+  summary?: React.ReactNode;
+  children?: React.ReactNode;
+}) {
   return (
-    <ol className="mb-6 flex items-center gap-2 text-xs font-semibold sm:text-sm">
-      {labels.map((l, i) => (
-        <li key={l} className={`flex min-w-0 items-center gap-2 ${i > 0 ? "flex-1" : ""}`}>
-          {i > 0 && <span className={`h-0.5 min-w-4 flex-1 rounded-full ${i <= step ? "bg-success" : "bg-border"}`} />}
-          <span
-            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${i < step ? "bg-success text-success-foreground" : i === step ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary"}`}
+    <section
+      className={`overflow-hidden rounded-2xl border bg-card transition-shadow ${
+        active ? "border-primary/40 shadow-lg shadow-primary/5 ring-1 ring-primary/10" : "shadow-sm"
+      }`}
+    >
+      <div className="flex items-center gap-3 px-4 py-4 sm:px-6">
+        <span
+          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
+            done
+              ? "bg-success text-success-foreground"
+              : active
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-muted-foreground"
+          }`}
+        >
+          {done ? <Check className="h-4 w-4" strokeWidth={3} /> : n}
+        </span>
+        <div className="min-w-0 flex-1">
+          <h2
+            className={`flex items-center gap-2 text-base font-bold sm:text-lg ${
+              !active && !done ? "text-muted-foreground" : "text-foreground"
+            }`}
           >
-            {i < step ? <Check className="h-4 w-4" /> : i + 1}
-          </span>
-          <span className={`hidden sm:inline ${i === step ? "text-primary" : "text-muted-foreground"}`}>{l}</span>
-        </li>
-      ))}
-    </ol>
+            {title}
+            {active && <Icon className="h-4 w-4 text-primary" />}
+          </h2>
+          {active && subtitle && <p className="text-xs text-muted-foreground sm:text-sm">{subtitle}</p>}
+          {!active && !done && <p className="text-xs text-muted-foreground">Preencha a etapa anterior</p>}
+        </div>
+        {done && onEdit && (
+          <button
+            type="button"
+            onClick={onEdit}
+            className="rounded-lg px-2 py-1 text-xs font-semibold text-primary hover:bg-primary/5"
+          >
+            Editar
+          </button>
+        )}
+      </div>
+      {done && summary && (
+        <div className="-mt-1 space-y-0.5 px-4 pb-4 pl-[3.75rem] text-sm text-muted-foreground sm:px-6 sm:pl-[4.25rem]">
+          {summary}
+        </div>
+      )}
+      {active && <div className="border-t bg-card px-4 py-5 sm:px-6 sm:py-6">{children}</div>}
+    </section>
+  );
+}
+
+function Field({
+  label,
+  hint,
+  className,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className={`block ${className ?? ""}`}>
+      <span className="mb-1.5 block text-[13px] font-semibold text-foreground/80">{label}</span>
+      {children}
+      {hint && <span className="mt-1 block text-[11px] leading-snug text-muted-foreground">{hint}</span>}
+    </label>
   );
 }
 
@@ -135,6 +214,7 @@ function CheckoutPage() {
   const [busy, setBusy] = useState(false);
   const [cepLoading, setCepLoading] = useState(false);
   const [couponInput, setCouponInput] = useState("");
+  const [couponOpen, setCouponOpen] = useState(false);
   const [coupon, setCoupon] = useState<{ code: string; percent: number } | null>(null);
   const [pix, setPix] = useState<Pix | null>(null);
   const [paid, setPaid] = useState(false);
@@ -152,6 +232,9 @@ function CheckoutPage() {
   const subtotal = lines.reduce((s, l) => s + l.p.price * l.qty, 0);
   const discount = coupon ? Math.round((subtotal * coupon.percent) / 100) : 0;
   const total = subtotal - discount;
+  const itemCount = lines.reduce((n, l) => n + l.qty, 0);
+  const compareTotal = lines.reduce((s, l) => s + Math.max(l.p.compareAt, l.p.price) * l.qty, 0);
+  const savings = compareTotal - total;
 
   useEffect(() => {
     void track("checkout_opened", { value_cents: subtotal });
@@ -334,6 +417,7 @@ function CheckoutPage() {
         pix_code: j.pix_code,
         qr_image: j.qr_image ?? null,
       });
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Não foi possível gerar o PIX.");
       generating.current = false;
@@ -379,11 +463,131 @@ function CheckoutPage() {
     }
   }
 
+  // ---------- Resumo do pedido (lateral no desktop, recolhível no topo no mobile) ----------
+  const summaryCard = (
+    <aside className="order-first h-fit overflow-hidden rounded-2xl border bg-card shadow-sm md:order-last md:sticky md:top-6">
+      <button
+        type="button"
+        onClick={() => setSummaryOpen((v) => !v)}
+        className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left md:pointer-events-none md:px-5 md:pt-5 md:pb-2"
+        aria-expanded={summaryOpen}
+      >
+        <span className="flex items-center gap-2 text-sm font-bold md:text-base">
+          <span className="md:hidden">{summaryOpen ? "Ocultar resumo" : "Ver resumo do pedido"}</span>
+          <span className="hidden md:inline">Resumo do pedido</span>
+          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-bold text-primary">
+            {itemCount} {itemCount === 1 ? "item" : "itens"}
+          </span>
+          <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform md:hidden ${summaryOpen ? "rotate-180" : ""}`} />
+        </span>
+        <span className="text-base font-extrabold text-primary md:hidden">{brl(total)}</span>
+      </button>
+
+      <div className={`${summaryOpen ? "block" : "hidden"} border-t md:block md:border-t-0`}>
+        <ul className="divide-y px-4 md:px-5">
+          {lines.map(({ p, qty }) => (
+            <li key={p.slug} className="flex gap-3 py-3">
+              <div className="relative shrink-0">
+                <img
+                  src={p.image}
+                  alt={p.name}
+                  width={64}
+                  height={64}
+                  className="h-16 w-16 rounded-xl border bg-white object-cover"
+                />
+                <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-foreground/80 px-1 text-[10px] font-bold text-background">
+                  {qty}
+                </span>
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="line-clamp-2 text-[13px] font-semibold leading-snug">{p.name}</p>
+                <p className="mt-0.5 flex items-baseline gap-1.5">
+                  {p.compareAt > p.price && (
+                    <span className="text-[11px] text-muted-foreground line-through">{brl(p.compareAt)}</span>
+                  )}
+                  <span className="text-sm font-bold text-primary">{brl(p.price)}</span>
+                </p>
+                {step < 2 ? (
+                  <div className="mt-1.5 flex items-center gap-1">
+                    <div className="flex items-center rounded-lg border">
+                      <button
+                        type="button"
+                        className="flex h-7 w-7 items-center justify-center text-muted-foreground hover:text-foreground"
+                        aria-label="Diminuir"
+                        onClick={() => setQty(p.slug, qty - 1)}
+                      >
+                        <Minus className="h-3 w-3" />
+                      </button>
+                      <span className="w-6 text-center text-xs font-semibold">{qty}</span>
+                      <button
+                        type="button"
+                        className="flex h-7 w-7 items-center justify-center text-muted-foreground hover:text-foreground"
+                        aria-label="Aumentar"
+                        onClick={() => setQty(p.slug, qty + 1)}
+                      >
+                        <Plus className="h-3 w-3" />
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      className="ml-auto flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                      aria-label={`Remover ${p.name}`}
+                      onClick={() => setQty(p.slug, 0)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <p className="mt-0.5 text-xs text-muted-foreground">Qtd: {qty}</p>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
+
+        <div className="space-y-2 border-t bg-muted/30 px-4 py-4 text-sm md:px-5">
+          <p className="flex justify-between">
+            <span className="text-muted-foreground">Subtotal</span>
+            <span className="font-medium">{brl(subtotal)}</span>
+          </p>
+          <p className="flex justify-between">
+            <span className="text-muted-foreground">Frete ({shipOpt.name})</span>
+            <span className="font-semibold text-success">Grátis</span>
+          </p>
+          {discount > 0 && (
+            <p className="flex justify-between text-success">
+              <span>Cupom {coupon?.code}</span>
+              <span className="font-semibold">-{brl(discount)}</span>
+            </p>
+          )}
+          <div className="flex items-end justify-between border-t pt-3">
+            <span className="font-semibold">Total</span>
+            <span className="text-right">
+              <span className="block text-2xl font-extrabold leading-none text-primary">{brl(total)}</span>
+              <span className="mt-1 block text-[11px] text-muted-foreground">à vista no PIX</span>
+            </span>
+          </div>
+          {savings > 0 && (
+            <p className="flex items-center justify-center gap-1.5 rounded-xl bg-success/10 px-3 py-2 text-xs font-semibold text-success">
+              <Tag className="h-3.5 w-3.5" /> Você está economizando {brl(savings)}
+            </p>
+          )}
+        </div>
+
+        <ul className="hidden space-y-2 border-t px-5 py-4 text-xs text-muted-foreground md:block">
+          <li className="flex items-center gap-2"><Truck className="h-4 w-4 text-primary" strokeWidth={1.75} /> Frete grátis para todo o Brasil</li>
+          <li className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-primary" strokeWidth={1.75} /> Pagamento seguro via PIX</li>
+          <li className="flex items-center gap-2"><Headphones className="h-4 w-4 text-primary" strokeWidth={1.75} /> Atendimento pelo WhatsApp</li>
+        </ul>
+      </div>
+    </aside>
+  );
+
   // ---------- Telas ----------
   const body = (() => {
     if (paid && pix) {
       return (
-        <div className="mx-auto max-w-md rounded-3xl border bg-card p-8 text-center shadow-sm">
+        <div className="mx-auto max-w-md rounded-3xl border bg-card p-8 text-center shadow-lg">
           <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-success/10">
             <CheckCircle2 className="h-9 w-9 text-success" />
           </span>
@@ -391,6 +595,9 @@ function CheckoutPage() {
           <p className="mt-2 text-muted-foreground">
             Obrigada, {customer.name.split(" ")[0]}! Recebemos {brl(pix.total_cents)}. Você vai
             receber as atualizações do pedido no WhatsApp.
+          </p>
+          <p className="mt-3 text-xs text-muted-foreground">
+            Pedido <span className="font-mono font-semibold text-foreground">#{pix.order_id.slice(0, 8).toUpperCase()}</span>
           </p>
           <Button asChild size="lg" className="mt-6 h-12 w-full rounded-2xl font-semibold">
             <Link to="/">Voltar à loja</Link>
@@ -401,29 +608,38 @@ function CheckoutPage() {
     if (pix) {
       return (
         <div className="mx-auto max-w-md space-y-4">
-          <div className="text-center">
-            <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <QrCode className="h-6 w-6" />
-            </span>
-            <h1 className="mt-3 text-2xl font-bold">Seu PIX está pronto!</h1>
-            <p className="mt-1 text-sm text-muted-foreground">Valor a pagar</p>
-            <p className="text-4xl font-bold text-primary">{brl(pix.total_cents)}</p>
-          </div>
-          <div className="space-y-4 rounded-3xl border bg-card p-5 shadow-sm">
-            {pix.qr_image && (
-              <img src={pix.qr_image} alt="QR Code PIX" width={240} height={240} className="mx-auto h-60 w-60 rounded-2xl border bg-card p-3" />
-            )}
-            <div className="rounded-2xl bg-muted p-3 text-left font-mono text-xs break-all text-muted-foreground">{pix.pix_code}</div>
-            <Button className="h-14 w-full rounded-2xl text-base font-semibold uppercase tracking-wide shadow-lg" size="lg" onClick={() => void copyPix()}>
-              {copied ? <Check className="h-5 w-5" /> : <Copy className="h-5 w-5" />}
-              {copied ? "Código copiado!" : "Copiar código PIX"}
-            </Button>
-            <div className="flex items-center justify-center gap-2 rounded-2xl bg-warning/15 p-3 text-sm font-semibold">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Aguardando confirmação do pagamento…
+          <div className="overflow-hidden rounded-3xl border bg-card shadow-lg">
+            <div className="bg-primary/5 px-5 py-5 text-center">
+              <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <QrCode className="h-6 w-6" />
+              </span>
+              <h1 className="mt-3 text-xl font-bold sm:text-2xl">Seu PIX está pronto!</h1>
+              <p className="mt-1 text-sm text-muted-foreground">Valor a pagar</p>
+              <p className="text-4xl font-extrabold text-primary">{brl(pix.total_cents)}</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Pedido <span className="font-mono font-semibold text-foreground">#{pix.order_id.slice(0, 8).toUpperCase()}</span>
+              </p>
+            </div>
+            <div className="space-y-4 p-5">
+              {pix.qr_image && (
+                <img src={pix.qr_image} alt="QR Code PIX" width={240} height={240} className="mx-auto h-56 w-56 rounded-2xl border bg-white p-3 sm:h-60 sm:w-60" />
+              )}
+              <div>
+                <p className="mb-1.5 text-xs font-semibold text-muted-foreground">PIX Copia e Cola</p>
+                <div className="max-h-24 overflow-y-auto rounded-xl border bg-muted/50 p-3 text-left font-mono text-[11px] break-all text-muted-foreground">{pix.pix_code}</div>
+              </div>
+              <Button className="h-14 w-full rounded-2xl text-base font-bold uppercase tracking-wide shadow-lg" size="lg" onClick={() => void copyPix()}>
+                {copied ? <Check className="h-5 w-5" /> : <Copy className="h-5 w-5" />}
+                {copied ? "Código copiado!" : "Copiar código PIX"}
+              </Button>
+              <div className="flex items-center justify-center gap-2 rounded-2xl bg-warning/15 p-3 text-sm font-semibold">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Aguardando confirmação do pagamento…
+              </div>
             </div>
           </div>
-          <ol className="space-y-3 rounded-3xl border bg-card p-5 text-sm">
+          <ol className="space-y-3 rounded-3xl border bg-card p-5 text-sm shadow-sm">
+            <li className="text-sm font-bold">Como pagar</li>
             {[
               `Abra o app do seu banco e escolha PIX Copia e Cola${pix.qr_image ? " ou leia o QR Code" : ""}.`,
               "Cole o código e confirme o pagamento.",
@@ -440,340 +656,392 @@ function CheckoutPage() {
     }
     if (lines.length === 0) {
       return (
-        <div className="text-center">
-          <p className="text-muted-foreground">Seu carrinho está vazio.</p>
-          <Button asChild className="mt-4">
+        <div className="mx-auto max-w-md rounded-3xl border bg-card p-8 text-center shadow-sm">
+          <p className="text-lg font-bold">Seu carrinho está vazio</p>
+          <p className="mt-1 text-sm text-muted-foreground">Escolha seu kit Happy Hair e volte aqui para finalizar.</p>
+          <Button asChild className="mt-5 h-11 rounded-xl px-6 font-semibold">
             <Link to="/">Ver produtos</Link>
           </Button>
         </div>
       );
     }
     return (
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="min-w-0">
-          <Steps step={step} />
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1fr)_360px] md:gap-8">
+        {summaryCard}
+
+        <div className="min-w-0 space-y-3">
+          <Link to="/" className="inline-flex items-center gap-1 text-sm font-semibold text-muted-foreground hover:text-primary">
+            <ArrowLeft className="h-4 w-4" /> Continuar comprando
+          </Link>
+
           {saved && step === 0 && (
-            <div className="mb-4 flex items-center justify-between gap-2 rounded-xl border border-primary/40 bg-primary/5 p-3 text-sm">
+            <div className="flex items-center justify-between gap-3 rounded-2xl border border-primary/30 bg-primary/5 p-3 pl-4 text-sm">
               <span>
-                Usar os dados salvos de <b>{saved.customer.name.split(" ")[0]}</b>?
+                Bem-vinda de volta! Usar os dados de <b>{saved.customer.name.split(" ")[0]}</b>?
               </span>
-              <div className="flex gap-2">
-                <Button size="sm" onClick={applySaved}>
+              <div className="flex shrink-0 gap-1.5">
+                <Button size="sm" className="rounded-lg" onClick={applySaved}>
                   Usar
                 </Button>
-                <Button size="sm" variant="ghost" onClick={() => setSaved(null)}>
+                <Button size="sm" variant="ghost" className="rounded-lg" onClick={() => setSaved(null)}>
                   Não
                 </Button>
               </div>
             </div>
           )}
-          {step === 0 && (
-            <form onSubmit={submitIdentity} className="space-y-4 rounded-3xl border-2 border-primary/20 bg-card p-5 shadow-sm">
-              <p className="flex items-center gap-2 text-xl font-extrabold text-primary">
-                <User className="h-4 w-4" />
-                Seus dados
-              </p>
-              <Input
-                required
-                autoComplete="name"
-                placeholder="Nome completo"
-                aria-label="Nome completo"
-                value={customer.name}
-                onChange={(e) => setCustomer({ ...customer, name: e.target.value })}
-              />
-              <Input
-                required
-                inputMode="tel"
-                autoComplete="tel"
-                placeholder="WhatsApp com DDD"
-                aria-label="WhatsApp"
-                value={maskPhone(customer.phone)}
-                onChange={(e) => setCustomer({ ...customer, phone: onlyDigits(e.target.value) })}
-              />
-              <Input
-                required
-                type="email"
-                autoComplete="email"
-                placeholder="E-mail"
-                aria-label="E-mail"
-                value={customer.email}
-                onChange={(e) => setCustomer({ ...customer, email: e.target.value })}
-              />
-              <Input
-                required
-                inputMode="numeric"
-                placeholder="CPF"
-                aria-label="CPF"
-                value={maskCpf(customer.cpf)}
-                onChange={(e) => setCustomer({ ...customer, cpf: onlyDigits(e.target.value) })}
-              />
-              <Button type="submit" size="lg" className="w-full" disabled={busy}>
-                {busy && <Loader2 className="h-4 w-4 animate-spin" />}Continuar para entrega
-              </Button>
-            </form>
-          )}
-          {step === 1 && (
-            <form onSubmit={submitAddress} className="space-y-4 rounded-3xl border-2 border-primary/20 bg-card p-5 shadow-sm">
-              <p className="flex items-center gap-2 text-xl font-extrabold text-primary">
-                <MapPin className="h-4 w-4" />
-                Endereço de entrega
-              </p>
-              <div className="relative">
+
+          {/* 1 — Identificação */}
+          <Section
+            n={1}
+            title="Identificação"
+            subtitle="Usaremos seus dados para entrega e atualizações do pedido."
+            icon={User}
+            active={step === 0}
+            done={step > 0}
+            onEdit={() => goto(0)}
+            summary={
+              <>
+                <p className="font-semibold text-foreground">{customer.name}</p>
+                <p>{customer.email}</p>
+                <p>{maskPhone(customer.phone)} • CPF {maskCpf(customer.cpf)}</p>
+              </>
+            }
+          >
+            <form onSubmit={submitIdentity} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field label="Nome completo" className="sm:col-span-2">
+                <Input
+                  required
+                  autoComplete="name"
+                  placeholder="Maria da Silva"
+                  aria-label="Nome completo"
+                  className={FIELD}
+                  value={customer.name}
+                  onChange={(e) => setCustomer({ ...customer, name: e.target.value })}
+                />
+              </Field>
+              <Field label="E-mail" hint="Você recebe a confirmação do pedido aqui." className="sm:col-span-2">
+                <Input
+                  required
+                  type="email"
+                  autoComplete="email"
+                  placeholder="seu@email.com"
+                  aria-label="E-mail"
+                  className={FIELD}
+                  value={customer.email}
+                  onChange={(e) => setCustomer({ ...customer, email: e.target.value })}
+                />
+              </Field>
+              <Field label="WhatsApp" hint="Para acompanhar a entrega.">
+                <Input
+                  required
+                  inputMode="tel"
+                  autoComplete="tel"
+                  placeholder="(11) 99999-9999"
+                  aria-label="WhatsApp"
+                  className={FIELD}
+                  value={maskPhone(customer.phone)}
+                  onChange={(e) => setCustomer({ ...customer, phone: onlyDigits(e.target.value) })}
+                />
+              </Field>
+              <Field label="CPF" hint="Obrigatório para pagamento via PIX.">
                 <Input
                   required
                   inputMode="numeric"
-                  autoComplete="postal-code"
-                  placeholder="CEP"
-                  aria-label="CEP"
-                  value={maskCep(address.cep)}
-                  onChange={(e) => {
-                    const v = onlyDigits(e.target.value);
-                    setAddress({ ...address, cep: v });
-                    if (v.length === 8) void lookupCep(v);
-                  }}
+                  placeholder="000.000.000-00"
+                  aria-label="CPF"
+                  className={FIELD}
+                  value={maskCpf(customer.cpf)}
+                  onChange={(e) => setCustomer({ ...customer, cpf: onlyDigits(e.target.value) })}
                 />
-                {cepLoading && (
-                  <Loader2 className="absolute right-3 top-2.5 h-4 w-4 animate-spin text-muted-foreground" />
-                )}
+              </Field>
+              <div className="sm:col-span-2">
+                <Button type="submit" size="lg" className="h-12 w-full rounded-xl text-base font-bold" disabled={busy}>
+                  {busy && <Loader2 className="h-4 w-4 animate-spin" />}Continuar para entrega
+                  {!busy && <ArrowRight className="h-4 w-4" />}
+                </Button>
+                <p className="mt-2.5 flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
+                  <Lock className="h-3 w-3" /> Seus dados são usados apenas para processar o pedido.
+                </p>
               </div>
-              <Input
-                required
-                placeholder="Rua"
-                aria-label="Rua"
-                value={address.street}
-                onChange={(e) => setAddress({ ...address, street: e.target.value })}
-              />
-              <div className="grid grid-cols-[110px_1fr] gap-2">
-                <Input
-                  required
-                  placeholder="Número"
-                  aria-label="Número"
-                  value={address.number}
-                  onChange={(e) => setAddress({ ...address, number: e.target.value })}
-                />
-                <Input
-                  placeholder="Complemento (opcional)"
-                  aria-label="Complemento"
-                  value={address.complement}
-                  onChange={(e) => setAddress({ ...address, complement: e.target.value })}
-                />
+            </form>
+          </Section>
+
+          {/* 2 — Entrega */}
+          <Section
+            n={2}
+            title="Entrega"
+            subtitle="Frete grátis para todo o Brasil."
+            icon={MapPin}
+            active={step === 1}
+            done={step > 1}
+            onEdit={() => goto(1)}
+            summary={
+              <>
+                <p className="font-semibold text-foreground">
+                  {address.street}, {address.number}
+                  {address.complement ? ` - ${address.complement}` : ""}
+                </p>
+                <p>
+                  {address.neighborhood ? `${address.neighborhood} • ` : ""}
+                  {address.city}/{address.state} • {maskCep(address.cep)}
+                </p>
+                <p className="text-success">
+                  {shipOpt.name} • Grátis • {arrivalLabel(shipOpt)}
+                </p>
+              </>
+            }
+          >
+            <form onSubmit={submitAddress} className="space-y-5">
+              <div className="grid grid-cols-6 gap-3 sm:gap-4">
+                <Field label="CEP" className="col-span-6 sm:col-span-3">
+                  <div className="relative">
+                    <Input
+                      required
+                      inputMode="numeric"
+                      autoComplete="postal-code"
+                      placeholder="00000-000"
+                      aria-label="CEP"
+                      className={FIELD}
+                      value={maskCep(address.cep)}
+                      onChange={(e) => {
+                        const v = onlyDigits(e.target.value);
+                        setAddress({ ...address, cep: v });
+                        if (v.length === 8) void lookupCep(v);
+                      }}
+                    />
+                    {cepLoading && (
+                      <Loader2 className="absolute right-3 top-3.5 h-4 w-4 animate-spin text-muted-foreground" />
+                    )}
+                  </div>
+                </Field>
+                <div className="col-span-6 flex items-end pb-3 sm:col-span-3">
+                  <a
+                    href="https://buscacepinter.correios.com.br/app/endereco/index.php"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs font-semibold text-primary hover:underline"
+                  >
+                    Não sei meu CEP
+                  </a>
+                </div>
+                <Field label="Rua / Avenida" className="col-span-6">
+                  <Input
+                    required
+                    autoComplete="address-line1"
+                    placeholder="Rua das Flores"
+                    aria-label="Rua"
+                    className={FIELD}
+                    value={address.street}
+                    onChange={(e) => setAddress({ ...address, street: e.target.value })}
+                  />
+                </Field>
+                <Field label="Número" className="col-span-2">
+                  <Input
+                    required
+                    placeholder="123"
+                    aria-label="Número"
+                    className={FIELD}
+                    value={address.number}
+                    onChange={(e) => setAddress({ ...address, number: e.target.value })}
+                  />
+                </Field>
+                <Field label="Complemento" className="col-span-4">
+                  <Input
+                    placeholder="Apto, bloco (opcional)"
+                    aria-label="Complemento"
+                    className={FIELD}
+                    value={address.complement}
+                    onChange={(e) => setAddress({ ...address, complement: e.target.value })}
+                  />
+                </Field>
+                <Field label="Bairro" className="col-span-6 sm:col-span-2">
+                  <Input
+                    placeholder="Centro"
+                    aria-label="Bairro"
+                    className={FIELD}
+                    value={address.neighborhood}
+                    onChange={(e) => setAddress({ ...address, neighborhood: e.target.value })}
+                  />
+                </Field>
+                <Field label="Cidade" className="col-span-4 sm:col-span-3">
+                  <Input
+                    required
+                    autoComplete="address-level2"
+                    placeholder="São Paulo"
+                    aria-label="Cidade"
+                    className={FIELD}
+                    value={address.city}
+                    onChange={(e) => setAddress({ ...address, city: e.target.value })}
+                  />
+                </Field>
+                <Field label="UF" className="col-span-2 sm:col-span-1">
+                  <Input
+                    required
+                    maxLength={2}
+                    placeholder="SP"
+                    aria-label="UF"
+                    className={`${FIELD} uppercase`}
+                    value={address.state}
+                    onChange={(e) =>
+                      setAddress({
+                        ...address,
+                        state: e.target.value.toUpperCase().replace(/[^A-Z]/g, ""),
+                      })
+                    }
+                  />
+                </Field>
               </div>
-              <Input
-                placeholder="Bairro"
-                aria-label="Bairro"
-                value={address.neighborhood}
-                onChange={(e) => setAddress({ ...address, neighborhood: e.target.value })}
-              />
-              <div className="grid grid-cols-[1fr_80px] gap-2">
-                <Input
-                  required
-                  placeholder="Cidade"
-                  aria-label="Cidade"
-                  value={address.city}
-                  onChange={(e) => setAddress({ ...address, city: e.target.value })}
-                />
-                <Input
-                  required
-                  maxLength={2}
-                  placeholder="UF"
-                  aria-label="UF"
-                  value={address.state}
-                  onChange={(e) =>
-                    setAddress({
-                      ...address,
-                      state: e.target.value.toUpperCase().replace(/[^A-Z]/g, ""),
-                    })
-                  }
-                />
-              </div>
-              <div className="space-y-2 pt-2">
-                <p className="text-sm font-semibold">Forma de entrega</p>
+
+              <div className="space-y-2">
+                <p className="text-[13px] font-semibold text-foreground/80">Forma de entrega</p>
                 {SHIPPING.map((o) => {
                   const on = shipping === o.id;
                   return (
-                    <label key={o.id} className={`flex cursor-pointer items-center gap-3 rounded-2xl border-2 bg-card p-4 shadow-sm ${on ? "border-primary" : "border-border"}`}>
-                      <img src={o.id === "sedex" ? correiosLogo.url : jadlogLogo.url} alt={o.name} width={64} height={32} className="h-8 w-16 shrink-0 object-contain" />
+                    <label
+                      key={o.id}
+                      className={`flex cursor-pointer items-center gap-3 rounded-xl border-2 p-3.5 transition-colors ${
+                        on ? "border-primary bg-primary/5" : "border-border bg-card hover:border-primary/40"
+                      }`}
+                    >
+                      <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${on ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/40"}`}>
+                        {on && <Check className="h-3 w-3" strokeWidth={3} />}
+                      </span>
+                      <img src={o.id === "sedex" ? correiosLogo.url : jadlogLogo.url} alt={o.name} width={56} height={28} className="h-7 w-14 shrink-0 object-contain" />
                       <span className="min-w-0 flex-1">
                         <span className="block text-sm font-semibold">{o.name}</span>
                         <span className="block text-xs text-muted-foreground">{arrivalLabel(o)}</span>
                       </span>
-                      <b className="text-sm text-success">Grátis</b>
-                      <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${on ? "bg-primary text-primary-foreground" : "border"}`}>
-                        {on && <Check className="h-3 w-3" />}
-                      </span>
+                      <span className="rounded-full bg-success/10 px-2.5 py-1 text-xs font-bold text-success">Grátis</span>
                       <input type="radio" name="shipping" checked={on} onChange={() => setShipping(o.id)} className="sr-only" aria-label={o.name} />
                     </label>
                   );
                 })}
               </div>
+
               <div className="flex gap-2">
-                <Button type="button" variant="outline" onClick={() => goto(0)}>
-                  Voltar
+                <Button type="button" variant="outline" className="h-12 rounded-xl px-4" onClick={() => goto(0)} aria-label="Voltar">
+                  <ArrowLeft className="h-4 w-4" />
                 </Button>
-                <Button type="submit" size="lg" className="flex-1">
-                  Continuar para pagamento
+                <Button type="submit" size="lg" className="h-12 flex-1 rounded-xl text-base font-bold">
+                  Continuar para pagamento <ArrowRight className="h-4 w-4" />
                 </Button>
               </div>
             </form>
-          )}
-          {step === 2 && (
-            <div className="space-y-4 rounded-3xl border-2 border-primary/20 bg-card p-5 shadow-sm">
-              <p className="text-xl font-bold">Pagamento</p>
-              <div className="divide-y rounded-2xl border bg-card text-sm">
-                <div className="flex items-start gap-3 p-4">
-                  <User className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                  <div className="flex-1">
-                    <p className="font-semibold">{customer.name}</p>
-                    <p className="text-muted-foreground">{maskPhone(customer.phone)}</p>
-                  </div>
-                  <button type="button" className="text-xs font-semibold text-primary hover:underline" onClick={() => goto(0)}>Alterar</button>
-                </div>
-                <div className="flex items-start gap-3 p-4">
-                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                  <div className="flex-1 text-muted-foreground">
-                    <p className="font-semibold text-foreground">Entrega • {shipOpt.name} • Frete grátis</p>
-                    <p>{arrivalLabel(shipOpt)}</p>
-                    <p>{address.street}, {address.number}{address.complement ? ` - ${address.complement}` : ""}</p>
-                    <p>{address.city}/{address.state} • {maskCep(address.cep)}</p>
-                  </div>
-                  <button type="button" className="text-xs font-semibold text-primary hover:underline" onClick={() => goto(1)}>Alterar</button>
-                </div>
+          </Section>
+
+          {/* 3 — Pagamento */}
+          <Section
+            n={3}
+            title="Pagamento"
+            subtitle="Pague com PIX e tenha seu pedido liberado mais rápido."
+            icon={CreditCard}
+            active={step === 2}
+            done={false}
+          >
+            <div className="space-y-4">
+              {/* Forma de pagamento */}
+              <div className="flex items-center gap-3 rounded-xl border-2 border-primary bg-primary/5 p-4">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-primary bg-primary text-primary-foreground">
+                  <Check className="h-3 w-3" strokeWidth={3} />
+                </span>
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#32BCAD]/15 text-[#1a8f83]">
+                  <QrCode className="h-5 w-5" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-bold">PIX</span>
+                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Zap className="h-3 w-3 text-success" /> Aprovação imediata
+                  </span>
+                </span>
+                <span className="text-right text-sm font-extrabold text-primary">{brl(total)}</span>
               </div>
-              <div>
-                <div className="flex items-center gap-2 rounded-2xl border bg-card p-1.5 pl-4 focus-within:border-primary">
+
+              {/* Cupom */}
+              {coupon ? (
+                <p className="flex items-center justify-between gap-2 rounded-xl bg-success/10 px-3.5 py-2.5 text-xs font-semibold text-success">
+                  <span className="flex items-center gap-1.5">
+                    <CheckCircle2 className="h-4 w-4" /> Cupom {coupon.code} aplicado: -{coupon.percent}% ({brl(discount)})
+                  </span>
+                  <button
+                    type="button"
+                    className="text-muted-foreground underline"
+                    onClick={() => {
+                      setCoupon(null);
+                      setCouponInput("");
+                    }}
+                  >
+                    Remover
+                  </button>
+                </p>
+              ) : couponOpen ? (
+                <div className="flex items-center gap-2 rounded-xl border bg-background p-1.5 pl-3.5 focus-within:border-primary">
                   <Tag className="h-4 w-4 shrink-0 text-muted-foreground" />
                   <input
-                    placeholder="Cupom de desconto"
+                    autoFocus
+                    placeholder="Código do cupom"
                     aria-label="Cupom"
                     value={couponInput}
                     onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        void applyCoupon();
+                      }
+                    }}
                     className="min-w-0 flex-1 bg-transparent text-sm outline-none"
                   />
-                  <Button type="button" variant="secondary" className="rounded-xl font-semibold" onClick={() => void applyCoupon()}>
+                  <Button type="button" variant="secondary" className="h-9 rounded-lg font-semibold" onClick={() => void applyCoupon()}>
                     Aplicar
                   </Button>
                 </div>
-                {coupon && (
-                  <p className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-success">
-                    <CheckCircle2 className="h-4 w-4" /> Cupom {coupon.code} aplicado: -{coupon.percent}% ({brl(discount)})
-                  </p>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setCouponOpen(true)}
+                  className="flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
+                >
+                  <Tag className="h-4 w-4" /> Tem um cupom de desconto?
+                </button>
+              )}
+
+              {/* Total */}
+              <div className="rounded-xl bg-muted/50 p-4">
+                <div className="flex items-end justify-between">
+                  <span className="text-sm font-semibold">Total a pagar</span>
+                  <span className="text-2xl font-extrabold leading-none text-primary">{brl(total)}</span>
+                </div>
+                {savings > 0 && (
+                  <p className="mt-1.5 text-right text-xs font-semibold text-success">Você economiza {brl(savings)}</p>
                 )}
               </div>
-              <div className="flex items-center justify-between rounded-2xl bg-primary/5 p-4">
-                <span className="text-sm font-semibold">Total a pagar</span>
-                <span className="text-2xl font-bold text-primary">{brl(total)}</span>
-              </div>
+
               <Button
                 size="lg"
-                className="h-14 w-full rounded-2xl text-base font-semibold uppercase tracking-wide shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl"
+                className="h-14 w-full rounded-2xl text-base font-bold uppercase tracking-wide shadow-lg shadow-primary/20 transition-all hover:-translate-y-0.5 hover:shadow-xl"
                 disabled={busy}
                 onClick={() => void generatePix()}
               >
                 {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <Lock className="h-5 w-5" />}
                 {busy ? "Gerando seu PIX…" : `Gerar PIX — ${brl(total)}`}
               </Button>
-              <Button type="button" variant="ghost" className="w-full" onClick={() => goto(1)}>
-                Voltar
+              <p className="flex items-center justify-center gap-1.5 text-center text-[11px] text-muted-foreground">
+                <ShieldCheck className="h-3.5 w-3.5 text-success" /> O código PIX aparece na próxima tela. Pagamento 100% seguro.
+              </p>
+              <Button type="button" variant="ghost" className="w-full text-muted-foreground" onClick={() => goto(1)}>
+                <ArrowLeft className="h-4 w-4" /> Voltar para entrega
               </Button>
             </div>
-          )}
+          </Section>
         </div>
-        <aside className="h-fit space-y-3 rounded-3xl border bg-card p-5 shadow-sm md:sticky md:top-24">
-          <button type="button" onClick={() => setSummaryOpen((v) => !v)} className="flex w-full items-center justify-between md:pointer-events-none">
-            <span className="text-lg font-bold">Resumo do seu pedido</span>
-            <span className="flex items-center gap-1 text-sm font-bold text-primary md:hidden">{brl(total)} <ChevronDown className={`h-4 w-4 transition-transform ${summaryOpen ? "rotate-180" : ""}`} /></span>
-          </button>
-          <div className={`${summaryOpen ? "block" : "hidden"} space-y-3 md:block`}>
-          <ul className="space-y-3">
-            {lines.map(({ p, qty }) => (
-              <li key={p.slug} className="flex gap-3">
-                <img
-                  src={p.image}
-                  alt={p.name}
-                  width={56}
-                  height={56}
-                  className="h-14 w-14 rounded-md object-cover"
-                />
-                <div className="flex-1 text-xs">
-                  <p className="font-medium leading-tight">{p.name}</p>
-                  <p className="font-bold text-primary">{brl(p.price)}</p>
-                  {step < 2 && (
-                    <div className="mt-1 flex items-center gap-1">
-                      <Button
-                        size="icon"
-                        variant="outline"
-                        className="h-6 w-6"
-                        aria-label="Diminuir"
-                        onClick={() => setQty(p.slug, qty - 1)}
-                      >
-                        <Minus className="h-3 w-3" />
-                      </Button>
-                      <span className="w-5 text-center">{qty}</span>
-                      <Button
-                        size="icon"
-                        variant="outline"
-                        className="h-6 w-6"
-                        aria-label="Aumentar"
-                        onClick={() => setQty(p.slug, qty + 1)}
-                      >
-                        <Plus className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="ml-auto h-6 w-6 text-muted-foreground hover:text-destructive"
-                        aria-label={`Remover ${p.name}`}
-                        onClick={() => setQty(p.slug, 0)}
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  )}
-                  {step === 2 && <p className="text-muted-foreground">Qtd: {qty}</p>}
-                </div>
-              </li>
-            ))}
-          </ul>
-          <div className="space-y-1 border-t pt-3 text-sm">
-            <p className="flex justify-between">
-              <span>Subtotal</span>
-              <span>{brl(subtotal)}</span>
-            </p>
-            <p className="flex justify-between">
-              <span>Frete</span>
-              <span className="text-success">Grátis</span>
-            </p>
-            {discount > 0 && (
-              <p className="flex justify-between text-success">
-                <span>Cupom {coupon?.code}</span>
-                <span>-{brl(discount)}</span>
-              </p>
-            )}
-            <p className="flex items-end justify-between border-t pt-3">
-              <span className="font-semibold">Total</span>
-              <span className="text-2xl font-bold text-primary">{brl(total)}</span>
-            </p>
-          </div>
-          </div>
-        </aside>
       </div>
     );
   })();
 
   return (
-    <div className="store-theme min-h-screen">
-      <StoreHeader />
-      <main className="mx-auto max-w-4xl px-4 py-6">
-        {!pix && (
-          <>
-            <Link to="/" className="text-sm font-semibold text-primary hover:underline">← Continuar comprando</Link>
-            <h1 className="mb-6 mt-2 text-3xl font-extrabold text-primary md:text-4xl">Finalizar compra 💖</h1>
-          </>
-        )}
-        {body}
-        <TrustBar />
-      </main>
-      <StoreFooter />
+    <div className="store-theme flex min-h-screen flex-col bg-muted/30">
+      <CheckoutHeader />
+      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-4 md:py-8">{body}</main>
+      <CheckoutFooter />
     </div>
   );
 }
@@ -795,7 +1063,29 @@ function pickUtm(t: Record<string, string>): Record<string, string> {
   return out;
 }
 
-function TrustBar() {
+/** Cabeçalho enxuto do checkout: só a marca e o selo de segurança (sem distrações). */
+function CheckoutHeader() {
+  return (
+    <header className="border-b bg-card">
+      <div className="mx-auto flex h-16 w-full max-w-5xl items-center justify-between px-4">
+        <Link to="/" className="text-2xl font-extrabold tracking-tight text-primary">
+          byhappy
+        </Link>
+        <span className="flex items-center gap-2.5">
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-success/10">
+            <Lock className="h-4 w-4 text-success" />
+          </span>
+          <span className="leading-tight">
+            <span className="block text-xs font-bold text-foreground sm:text-sm">Compra 100% segura</span>
+            <span className="block text-[11px] text-muted-foreground">Ambiente protegido</span>
+          </span>
+        </span>
+      </div>
+    </header>
+  );
+}
+
+function CheckoutFooter() {
   const items = [
     { Icon: Lock, label: "Pagamento protegido" },
     { Icon: ShieldCheck, label: "Ambiente seguro" },
@@ -803,12 +1093,19 @@ function TrustBar() {
     { Icon: Headphones, label: "Atendimento ao cliente" },
   ];
   return (
-    <ul className="mt-10 grid grid-cols-2 gap-3 border-t pt-6 md:grid-cols-4">
-      {items.map(({ Icon, label }) => (
-        <li key={label} className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Icon className="h-4 w-4 shrink-0 text-primary" strokeWidth={1.5} /> {label}
-        </li>
-      ))}
-    </ul>
+    <footer className="mt-8 border-t bg-card">
+      <div className="mx-auto w-full max-w-5xl px-4 py-6">
+        <ul className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          {items.map(({ Icon, label }) => (
+            <li key={label} className="flex items-center justify-center gap-2 text-xs text-muted-foreground md:justify-start">
+              <Icon className="h-4 w-4 shrink-0 text-primary" strokeWidth={1.5} /> {label}
+            </li>
+          ))}
+        </ul>
+        <p className="mt-5 text-center text-[11px] text-muted-foreground">
+          © {new Date().getFullYear()} byhappy • Todos os direitos reservados
+        </p>
+      </div>
+    </footer>
   );
 }
