@@ -1,14 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
-import {
-  ChevronDown,
-  Headphones,
-  QrCode,
-  ShieldCheck,
-  ShoppingCart,
-  Truck,
-  BadgeCheck,
-} from "lucide-react";
+import { ChevronDown, ShoppingCart } from "lucide-react";
 import { AVULSOS, KITS, type Product } from "@/lib/catalog";
 import { addToCart } from "@/lib/cart";
 import { brl } from "@/lib/store";
@@ -57,54 +49,54 @@ function buy(p: Product) {
   toast.success("Adicionado ao carrinho.");
 }
 
-function ProductCard({ p, badge, reserve }: { p: Product; badge?: "recommended" | "best"; reserve?: boolean }) {
+function ProductCard({ p, badge }: { p: Product; badge?: "recommended" | "best" }) {
   const off = offOf(p);
   const saving = savingOf(p);
-  const highlighted = badge === "recommended";
   return (
     <article
-      className={`relative flex flex-col overflow-hidden rounded-2xl border bg-card transition-shadow hover:shadow-lg ${
-        highlighted ? "border-2 border-primary shadow-md shadow-primary/10" : ""
+      className={`flex flex-col overflow-hidden rounded-2xl border bg-card transition-shadow hover:shadow-lg ${
+        badge === "recommended" ? "border-2 border-primary shadow-md shadow-primary/10" : ""
       }`}
     >
-      {(badge || reserve) && (
-        <div
-          aria-hidden={!badge}
-          className={`py-1.5 text-center text-[11px] font-extrabold uppercase tracking-wide sm:text-xs ${
-            !badge ? "invisible" : badge === "recommended" ? "bg-primary text-primary-foreground" : "bg-amber-400 text-amber-950"
-          }`}
-        >
-          {badge === "recommended" ? "⭐ Recomendado" : "💎 Melhor custo-benefício"}
-        </div>
-      )}
       <div className="relative aspect-square bg-muted">
         <img src={p.image} alt={p.name} loading="lazy" width={400} height={400} className="h-full w-full object-cover" />
         {off > 0 && (
-          <span className="absolute left-2 top-2 rounded-full bg-red-600 px-2.5 py-1 text-xs font-extrabold text-white shadow-sm">
+          <span className="absolute left-2 top-2 rounded-full bg-red-600 px-2 py-0.5 text-[11px] font-extrabold text-white shadow-sm sm:px-2.5 sm:py-1 sm:text-xs">
             -{off}%
           </span>
         )}
+        {badge && (
+          <span
+            className={`absolute inset-x-0 bottom-0 truncate py-1 text-center text-[10px] font-extrabold uppercase tracking-wide sm:py-1.5 sm:text-xs ${
+              badge === "recommended" ? "bg-primary text-primary-foreground" : "bg-amber-400 text-amber-950"
+            }`}
+          >
+            {badge === "recommended" ? "⭐ Recomendado" : "💎 Custo-benefício"}
+          </span>
+        )}
       </div>
-      <div className="flex flex-1 flex-col gap-2 p-3">
-        <h3 className="line-clamp-3 text-sm font-semibold leading-snug">{p.name}</h3>
-        <p className="text-xs font-medium text-muted-foreground">Tratamento para {p.days} dias</p>
+      <div className="flex flex-1 flex-col gap-1.5 p-2.5 sm:gap-2 sm:p-3">
+        <h3 className="line-clamp-3 min-h-[3.4rem] text-[13px] font-semibold leading-snug sm:min-h-[3.75rem] sm:text-sm">{p.name}</h3>
+        <p className="truncate text-[11px] font-medium text-muted-foreground sm:text-xs">{p.days} dias de tratamento</p>
         <div className="mt-auto space-y-1">
-          {off > 0 && <p className="text-xs text-muted-foreground line-through">de {brl(p.compareAt)}</p>}
-          <p className="flex flex-wrap items-baseline gap-x-1.5">
-            <span className="text-xl font-extrabold leading-none text-primary sm:text-2xl">{brl(p.price)}</span>
-            <span className="text-[11px] font-semibold text-success">no PIX</span>
+          {off > 0 && <p className="text-[11px] text-muted-foreground line-through sm:text-xs">de {brl(p.compareAt)}</p>}
+          <p className="flex flex-wrap items-baseline gap-x-1">
+            <span className="text-lg font-extrabold leading-none text-primary sm:text-2xl">{brl(p.price)}</span>
+            <span className="text-[10px] font-semibold text-success sm:text-[11px]">no PIX</span>
           </p>
           {perDay(p) > 0 && (
-            <p className="inline-flex rounded-md bg-amber-100 px-1.5 py-0.5 text-[11px] font-bold text-amber-900">
+            <p className="inline-flex rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-900 sm:text-[11px]">
               só {brl(perDay(p))}/dia
             </p>
           )}
-          {saving > 0 && <p className="text-[11px] font-bold text-success">Você economiza {brl(saving)}</p>}
+          {saving > 0 && (
+            <p className="text-[10px] font-bold leading-tight text-success sm:text-[11px]">Economize {brl(saving)}</p>
+          )}
         </div>
         <button
           type="button"
           onClick={() => buy(p)}
-          className="mt-1 flex h-10 w-full items-center justify-center gap-1.5 rounded-xl bg-success text-sm font-extrabold uppercase tracking-wide text-success-foreground shadow-sm transition hover:brightness-110 active:scale-[0.98]"
+          className="mt-1 flex h-10 w-full items-center justify-center gap-1.5 rounded-xl bg-success text-[13px] font-extrabold uppercase tracking-wide text-success-foreground shadow-sm transition hover:brightness-110 active:scale-[0.98] sm:text-sm"
         >
           <ShoppingCart className="h-4 w-4" /> Comprar
         </button>
@@ -113,37 +105,10 @@ function ProductCard({ p, badge, reserve }: { p: Product; badge?: "recommended" 
   );
 }
 
-function TrustStrip() {
-  const items = [
-    { Icon: Truck, title: "Frete grátis", text: "Para todo o Brasil" },
-    { Icon: QrCode, title: "PIX na hora", text: "Aprovação imediata" },
-    { Icon: ShieldCheck, title: "Envio SEDEX", text: `Em ${SHIPPING[0]!.minDays} a ${SHIPPING[0]!.maxDays} dias úteis` },
-    { Icon: BadgeCheck, title: "Revendedora autorizada", text: "Produtos originais" },
-    { Icon: Headphones, title: "Atendimento", text: "Pelo WhatsApp" },
-  ];
-  return (
-    <section className="border-y bg-card">
-      <ul className="mx-auto grid max-w-6xl grid-cols-2 gap-x-3 gap-y-3 px-4 py-4 sm:grid-cols-3 lg:grid-cols-5">
-        {items.map(({ Icon, title, text }, i) => (
-          <li key={title} className={`flex items-center gap-2.5 ${i === items.length - 1 ? "col-span-2 justify-center sm:col-span-1 sm:justify-start" : ""}`}>
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <Icon className="h-[18px] w-[18px]" />
-            </span>
-            <span className="leading-tight">
-              <span className="block text-xs font-bold sm:text-sm">{title}</span>
-              <span className="block text-[11px] text-muted-foreground">{text}</span>
-            </span>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
-
 function KitChooser({ recommended }: { recommended: string }) {
   const kits = [...KITS].sort((a, b) => a.days - b.days);
   return (
-    <section className="mx-auto max-w-6xl px-4 py-12">
+    <section className="mx-auto max-w-6xl px-4 py-10 sm:py-12">
       <div className="mx-auto max-w-2xl text-center">
         <h2 className="text-2xl font-extrabold md:text-3xl">Qual kit é ideal pra você?</h2>
         <p className="mt-2 text-sm text-muted-foreground md:text-base">
@@ -152,57 +117,54 @@ function KitChooser({ recommended }: { recommended: string }) {
           baratos por dia</b>.
         </p>
       </div>
-      <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-6 grid grid-cols-2 gap-3 sm:mt-8 sm:gap-4 lg:grid-cols-4">
         {kits.map((k) => {
           const rec = k.slug === recommended;
           return (
             <div
               key={k.slug}
-              className={`flex flex-col rounded-2xl border bg-card p-4 ${rec ? "border-2 border-primary shadow-lg shadow-primary/10" : ""}`}
+              className={`flex flex-col overflow-hidden rounded-2xl border bg-card ${rec ? "border-2 border-primary shadow-lg shadow-primary/10" : ""}`}
             >
-              <img
-                src={k.image}
-                alt={k.name}
-                loading="lazy"
-                width={300}
-                height={300}
-                className="mb-3 aspect-square w-full rounded-xl border bg-white object-cover"
-              />
-              <div className="flex items-center justify-between">
-                <span className="text-3xl font-extrabold text-primary">{k.days}</span>
+              <div className="relative aspect-square bg-white">
+                <img src={k.image} alt={k.name} loading="lazy" width={300} height={300} className="h-full w-full object-cover" />
                 {rec && (
-                  <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-extrabold uppercase text-primary-foreground">
+                  <span className="absolute inset-x-0 bottom-0 truncate bg-primary py-1 text-center text-[10px] font-extrabold uppercase tracking-wide text-primary-foreground sm:py-1.5 sm:text-xs">
                     ⭐ Recomendado
                   </span>
                 )}
               </div>
-              <p className="-mt-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">dias de tratamento</p>
-              <p className="mt-3 line-clamp-2 min-h-[2.5rem] text-sm font-semibold leading-snug">{k.name}</p>
-              <dl className="mt-3 space-y-1 text-sm">
-                <div className="flex justify-between">
-                  <dt className="text-muted-foreground">Por dia</dt>
-                  <dd className="font-bold text-amber-700">{brl(perDay(k))}</dd>
-                </div>
-                {savingOf(k) > 0 && (
-                  <div className="flex justify-between">
+              <div className="flex flex-1 flex-col p-2.5 sm:p-4">
+                <p className="leading-none">
+                  <span className="text-2xl font-extrabold text-primary sm:text-3xl">{k.days}</span>{" "}
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground sm:text-xs">dias</span>
+                </p>
+                <p className="mt-1.5 line-clamp-2 min-h-[2rem] text-[11px] font-semibold leading-snug sm:min-h-[2.5rem] sm:text-sm">{k.name}</p>
+                <dl className="mt-2 space-y-0.5 text-[11px] sm:mt-3 sm:space-y-1 sm:text-sm">
+                  <div className="flex justify-between gap-1">
+                    <dt className="text-muted-foreground">Por dia</dt>
+                    <dd className="font-bold text-amber-700">{brl(perDay(k))}</dd>
+                  </div>
+                  <div className="flex justify-between gap-1">
                     <dt className="text-muted-foreground">Economia</dt>
                     <dd className="font-bold text-success">{brl(savingOf(k))}</dd>
                   </div>
-                )}
-                <div className="flex justify-between border-t pt-1">
-                  <dt className="font-semibold">Total no PIX</dt>
-                  <dd className="font-extrabold text-primary">{brl(k.price)}</dd>
+                  <div className="flex justify-between gap-1 border-t pt-1">
+                    <dt className="font-semibold">Total</dt>
+                    <dd className="font-extrabold text-primary">{brl(k.price)}</dd>
+                  </div>
+                </dl>
+                <div className="mt-auto pt-3">
+                <button
+                  type="button"
+                  onClick={() => buy(k)}
+                  className={`h-9 w-full rounded-xl text-[11px] font-extrabold uppercase tracking-wide transition active:scale-[0.98] sm:h-10 sm:text-sm ${
+                    rec ? "bg-success text-success-foreground hover:brightness-110" : "border-2 border-success text-success hover:bg-success/10"
+                  }`}
+                >
+                  Escolher
+                </button>
                 </div>
-              </dl>
-              <button
-                type="button"
-                onClick={() => buy(k)}
-                className={`mt-4 h-10 rounded-xl text-sm font-extrabold uppercase tracking-wide transition active:scale-[0.98] ${
-                  rec ? "bg-success text-success-foreground hover:brightness-110" : "border-2 border-success text-success hover:bg-success/10"
-                }`}
-              >
-                Escolher este kit
-              </button>
+              </div>
             </div>
           );
         })}
@@ -286,19 +248,19 @@ function StorePage() {
           </button>
         </div>
       </div>
-      <section className="mx-auto max-w-6xl px-4 pb-6 pt-10 text-center">
-        <h1 className="text-3xl font-bold md:text-4xl">Kits Happy Hair com brindes grátis</h1>
-        <p className="mt-2 text-muted-foreground">Quanto maior o kit, maior o desconto — até 80% off.</p>
+      <section className="mx-auto max-w-6xl px-4 pb-4 pt-8 text-center sm:pb-6 sm:pt-10">
+        <h1 className="text-2xl font-bold sm:text-3xl md:text-4xl">Kits Happy Hair com brindes grátis</h1>
+        <p className="mt-1.5 text-sm text-muted-foreground sm:mt-2 sm:text-base">Quanto maior o kit, maior o desconto — até 80% off.</p>
       </section>
       <main className="mx-auto max-w-6xl px-4 pb-6">
-        <h2 id="kits" className="mb-4 scroll-mt-24 text-xl font-bold">Kits em destaque</h2>
+        <h2 id="kits" className="mb-3 scroll-mt-20 text-lg font-bold sm:mb-4 sm:text-xl">Kits em destaque</h2>
         <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
-          {KITS.map((p) => <ProductCard key={p.slug} p={p} badge={badgeFor(p.slug)} reserve />)}
+          {KITS.map((p) => <ProductCard key={p.slug} p={p} badge={badgeFor(p.slug)} />)}
         </div>
       </main>
       <KitChooser recommended={RECOMMENDED_SLUG} />
       <section className="mx-auto max-w-6xl px-4 pb-10">
-        <h2 className="mb-4 text-xl font-bold">Produtos avulsos</h2>
+        <h2 className="mb-3 text-lg font-bold sm:mb-4 sm:text-xl">Produtos avulsos</h2>
         <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
           {AVULSOS.map((p) => <ProductCard key={p.slug} p={p} />)}
         </div>
