@@ -206,6 +206,19 @@ const asRecord = (v: Json | undefined): Record<string, Json | undefined> =>
   v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, Json | undefined>) : {};
 const str = (v: Json | undefined): string | null => (typeof v === "string" && v.trim() ? v : null);
 
+/** Formato "nome|id" que a Utmify usa pra ligar a venda ao anúncio (mesma regra da loja Gummy). */
+function utmifyPair(nameRaw: Json | undefined, idRaw: Json | undefined, fallbackRaw: Json | undefined): string | null {
+  const id = (str(idRaw) ?? "").replace(/\D/g, "");
+  let name = str(nameRaw) ?? str(fallbackRaw) ?? "";
+  if (name.includes("|")) {
+    const [l = "", r = ""] = name.split("|").map((p) => p.trim());
+    if (l && r) return `${l}|${r}`;
+    name = l || r;
+  }
+  if (name && id) return name === id ? id : `${name}|${id}`;
+  return id || name || null;
+}
+
 /** Se o pedido veio sem UTM, recupera a campanha do lead/sessão e salva no pedido. */
 async function ensureTracking(order: OrderRow): Promise<Record<string, Json | undefined>> {
   const tracking = asRecord(order.tracking);
@@ -320,14 +333,15 @@ export async function notifyUtmify(
             },
           ],
       trackingParameters: {
-        src: str(t["src"]),
-        sck: str(t["sck"]),
-        utm_source: str(t["utm_source"]),
-        utm_campaign: str(t["utm_campaign"]),
-        utm_medium: str(t["utm_medium"]),
-        utm_content: str(t["utm_content"]),
-        utm_term: str(t["utm_term"]),
-      },
+src: str(t["src"]) ?? str(t["utm_source"]),
+sck: str(t["sck"]),
+utm_source: str(t["utm_source"]),
+utm_campaign: utmifyPair(t["campaign_name"], t["campaign_id"], t["utm_campaign"]),
+utm_medium: utmifyPair(t["adset_name"], t["adset_id"], t["utm_medium"]),
+utm_content: utmifyPair(t["ad_name"], t["ad_id"], t["utm_content"]),
+// utm_term = posicionamento (Feed, Stories...), como na Gummy
+utm_term: str(t["placement"]) ?? str(t["site_source_name"]) ?? str(t["utm_term"]),
+},
       commission: {
         totalPriceInCents: order.total_cents,
         gatewayFeeInCents: 0,
