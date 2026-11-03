@@ -160,6 +160,14 @@ function KitChooser({ recommended }: { recommended: string }) {
               key={k.slug}
               className={`flex flex-col rounded-2xl border bg-card p-4 ${rec ? "border-2 border-primary shadow-lg shadow-primary/10" : ""}`}
             >
+              <img
+                src={k.image}
+                alt={k.name}
+                loading="lazy"
+                width={300}
+                height={300}
+                className="mb-3 aspect-square w-full rounded-xl border bg-white object-cover"
+              />
               <div className="flex items-center justify-between">
                 <span className="text-3xl font-extrabold text-primary">{k.days}</span>
                 {rec && (
