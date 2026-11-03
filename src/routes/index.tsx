@@ -237,7 +237,12 @@ function StorePage() {
       <StoreHeader />
       <PromoBar />
       <div className="relative">
-        <img src={bannerAsset.url} alt="Promoção byhappy" className="w-full" />
+        {/* No celular: banner mais alto, recortando as laterais e mantendo a modelo + a oferta (lado direito). */}
+        <img
+          src={bannerAsset.url}
+          alt="Promoção byhappy"
+          className="aspect-[2/1] w-full object-cover object-[88%_50%] sm:aspect-auto sm:object-center"
+        />
         <div className="absolute inset-x-0 bottom-2 flex justify-center sm:bottom-6">
           <button
             type="button"
