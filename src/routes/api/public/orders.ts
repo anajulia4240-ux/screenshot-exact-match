@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { findProduct } from "@/lib/catalog";
+import { findProduct, priceFor } from "@/lib/catalog";
 
 const Body = z.object({
   name: z.string().trim().min(2).max(120),
@@ -16,9 +16,12 @@ export const Route = createFileRoute("/api/public/orders")({
       POST: async ({ request }) => {
         const parsed = Body.safeParse(await request.json().catch(() => null));
         if (!parsed.success) return Response.json({ error: "Dados inválidos." }, { status: 400 });
+        // Preço vem do painel (aba Preços); se não houver, usa o padrão do catálogo.
+        const { loadPriceMap } = await import("@/lib/prices.server");
+        const priceMap = await loadPriceMap();
         const items = parsed.data.items.map((i) => {
           const p = findProduct(i.slug);
-          return p ? { slug: p.slug, name: p.name, qty: i.qty, price_cents: p.price } : null;
+          return p ? { slug: p.slug, name: p.name, qty: i.qty, price_cents: priceFor(p.slug, priceMap).price } : null;
         });
         if (items.some((i) => !i)) return Response.json({ error: "Produto inválido." }, { status: 400 });
         const valid = items.filter((i): i is NonNullable<typeof i> => !!i);
