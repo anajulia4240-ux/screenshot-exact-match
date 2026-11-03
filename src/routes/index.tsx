@@ -57,7 +57,7 @@ function buy(p: Product) {
   toast.success("Adicionado ao carrinho.");
 }
 
-function ProductCard({ p, badge }: { p: Product; badge?: "recommended" | "best" }) {
+function ProductCard({ p, badge, reserve }: { p: Product; badge?: "recommended" | "best"; reserve?: boolean }) {
   const off = offOf(p);
   const saving = savingOf(p);
   const highlighted = badge === "recommended";
@@ -67,10 +67,11 @@ function ProductCard({ p, badge }: { p: Product; badge?: "recommended" | "best" 
         highlighted ? "border-2 border-primary shadow-md shadow-primary/10" : ""
       }`}
     >
-      {badge && (
+      {(badge || reserve) && (
         <div
+          aria-hidden={!badge}
           className={`py-1.5 text-center text-[11px] font-extrabold uppercase tracking-wide sm:text-xs ${
-            badge === "recommended" ? "bg-primary text-primary-foreground" : "bg-amber-400 text-amber-950"
+            !badge ? "invisible" : badge === "recommended" ? "bg-primary text-primary-foreground" : "bg-amber-400 text-amber-950"
           }`}
         >
           {badge === "recommended" ? "⭐ Recomendado" : "💎 Melhor custo-benefício"}
@@ -285,7 +286,7 @@ function StorePage() {
       <main className="mx-auto max-w-6xl px-4 pb-6">
         <h2 id="kits" className="mb-4 scroll-mt-24 text-xl font-bold">Kits em destaque</h2>
         <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
-          {KITS.map((p) => <ProductCard key={p.slug} p={p} badge={badgeFor(p.slug)} />)}
+          {KITS.map((p) => <ProductCard key={p.slug} p={p} badge={badgeFor(p.slug)} reserve />)}
         </div>
       </main>
       <KitChooser recommended={RECOMMENDED_SLUG} />
