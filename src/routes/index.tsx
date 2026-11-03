@@ -40,10 +40,6 @@ function bestValueSlug(): string | null {
   return sorted[0]?.slug ?? null;
 }
 
-function scrollToKits() {
-  document.getElementById("kits")?.scrollIntoView({ behavior: "smooth", block: "start" });
-}
-
 function buy(p: Product) {
   addToCart(p.slug);
   toast.success("Adicionado ao carrinho.");
@@ -238,15 +234,6 @@ function StorePage() {
       <PromoBar />
       <div className="relative">
         <img src={bannerAsset.url} alt="Promoção byhappy" className="w-full" />
-        <div className="absolute inset-x-0 bottom-2 flex justify-center sm:bottom-6">
-          <button
-            type="button"
-            onClick={scrollToKits}
-            className="flex items-center gap-1.5 rounded-full bg-success px-4 py-2 text-xs font-extrabold uppercase tracking-wide text-success-foreground shadow-lg shadow-black/20 ring-2 ring-white/80 transition hover:brightness-110 active:scale-[0.98] sm:px-7 sm:py-3 sm:text-base"
-          >
-            Escolher meu kit <ChevronDown className="h-4 w-4" />
-          </button>
-        </div>
       </div>
       <section className="mx-auto max-w-6xl px-4 pb-4 pt-8 text-center sm:pb-6 sm:pt-10">
         <h1 className="text-2xl font-bold sm:text-3xl md:text-4xl">Kits Happy Hair com brindes grátis</h1>
