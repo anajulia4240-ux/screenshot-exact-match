@@ -55,6 +55,12 @@ export function fbqIdentify(d: MatchInput): void {
   if (d.state) data["st"] = low(d.state);
   if (d.cep) data["zp"] = digits(d.cep);
   if (d.cpf && digits(d.cpf)) data["external_id"] = digits(d.cpf);
+  // Guarda para o init do Pixel em __root.tsx reaplicar em toda página (igual à Gummy).
+  try {
+    localStorage.setItem("byhappy_fb_am", JSON.stringify(data));
+  } catch {
+    /* ignorado */
+  }
   call("init", META_PIXEL_ID, data, { agent: "lovable" });
 }
 
