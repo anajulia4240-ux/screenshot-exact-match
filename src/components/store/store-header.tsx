@@ -7,14 +7,6 @@ import { setCartOpen, useCart } from "@/lib/cart";
 import { CartDrawer } from "@/components/store/cart-drawer";
 import { Button } from "@/components/ui/button";
 
-/** Menu rosa abaixo do cabeçalho (âncoras da página inicial). */
-const NAV_LINKS: { label: string; short: string; to: "/" | "/rastreio"; hash?: string }[] = [
-  { label: "Minha conta", short: "Conta", to: "/rastreio" },
-  { label: "Kits promocionais", short: "Kits", to: "/", hash: "kits" },
-  { label: "Tratamentos", short: "Tratamentos", to: "/", hash: "tratamentos" },
-  { label: "Resultados reais", short: "Resultados", to: "/", hash: "resultados" },
-];
-
 export function StoreHeader() {
   const cart = useCart();
   const count = Object.values(cart).reduce((a, b) => a + b, 0);
@@ -48,20 +40,6 @@ export function StoreHeader() {
           </div>
         </div>
       </header>
-      <nav aria-label="Menu da loja" className="bg-primary text-primary-foreground">
-        <div className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <ul className="mx-auto flex h-10 w-max min-w-full items-center justify-center gap-4 px-3 text-[11px] font-extrabold uppercase tracking-wider sm:gap-10 sm:px-4 sm:text-xs sm:tracking-[0.12em]">
-            {NAV_LINKS.map((l) => (
-              <li key={l.label} className="whitespace-nowrap">
-                <Link to={l.to} hash={l.hash} className="border-b-2 border-transparent pb-0.5 transition-colors hover:border-current">
-                  <span className="sm:hidden">{l.short}</span>
-            <span className="hidden sm:inline">{l.label}</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </nav>
       <CartDrawer />
     </>
   );
