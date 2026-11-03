@@ -108,8 +108,8 @@ function Steps({ step }: { step: number }) {
   return (
     <ol className="mb-6 flex items-center gap-2 text-xs font-semibold sm:text-sm">
       {labels.map((l, i) => (
-        <li key={l} className="flex flex-1 items-center gap-2">
-          {i > 0 && <span className={`h-0.5 flex-1 rounded-full ${i <= step ? "bg-success" : "bg-border"}`} />}
+        <li key={l} className={`flex min-w-0 items-center gap-2 ${i > 0 ? "flex-1" : ""}`}>
+          {i > 0 && <span className={`h-0.5 min-w-4 flex-1 rounded-full ${i <= step ? "bg-success" : "bg-border"}`} />}
           <span
             className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${i < step ? "bg-success text-success-foreground" : i === step ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary"}`}
           >
