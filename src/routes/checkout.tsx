@@ -11,6 +11,7 @@ import {
   Minus,
   Plus,
   ShieldCheck,
+  Trash2,
   User,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -640,6 +641,15 @@ function CheckoutPage() {
                         onClick={() => setQty(p.slug, qty + 1)}
                       >
                         <Plus className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="ml-auto h-6 w-6 text-muted-foreground hover:text-destructive"
+                        aria-label={`Remover ${p.name}`}
+                        onClick={() => setQty(p.slug, 0)}
+                      >
+                        <Trash2 className="h-3 w-3" />
                       </Button>
                     </div>
                   )}
