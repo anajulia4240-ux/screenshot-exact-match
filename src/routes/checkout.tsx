@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { getSessionId, getTracking, track } from "@/lib/track";
+import { fbqIdentify, fbqTrack, getTestEventCode, purchaseOnce } from "@/lib/fbq";
 import {
   Check,
   ChevronDown,
@@ -142,6 +143,7 @@ function CheckoutPage() {
   const [shipping, setShipping] = useState<ShippingId>("sedex");
   const shipOpt = SHIPPING.find((o) => o.id === shipping) ?? SHIPPING[0]!;
   const generating = useRef(false);
+  const contentIds = useRef<string[]>([]);
 
   const lines = Object.entries(cart).flatMap(([slug, qty]) => {
     const p = findProduct(slug);
@@ -153,6 +155,13 @@ function CheckoutPage() {
 
   useEffect(() => {
     void track("checkout_opened", { value_cents: subtotal });
+    fbqTrack("InitiateCheckout", {
+      value: subtotal / 100,
+      currency: "BRL",
+      num_items: lines.reduce((n, l) => n + l.qty, 0),
+      content_ids: lines.map((l) => l.p.slug),
+      content_type: "product",
+    });
     setSaved(loadSaved());
   }, []);
 
@@ -209,6 +218,7 @@ function CheckoutPage() {
       /* lead é best-effort: não trava a compra */
     }
     save(customer, address);
+    fbqIdentify(customer);
     setBusy(false);
     goto(1);
   }
@@ -249,6 +259,7 @@ function CheckoutPage() {
     if (!address.street || !address.number || !address.city || address.state.length !== 2)
       return void toast.error("Preencha o endereço completo.");
     save(customer, address);
+    fbqIdentify({ ...customer, cep: address.cep, city: address.city, state: address.state });
     goto(2);
   }
 
@@ -277,6 +288,8 @@ function CheckoutPage() {
     if (generating.current) return; // bloqueia duplo clique
     generating.current = true;
     setBusy(true);
+    contentIds.current = lines.map((l) => l.p.slug);
+    fbqTrack("AddPaymentInfo", { value: total / 100, currency: "BRL", content_ids: contentIds.current, content_type: "product" });
     try {
       let leadId: string | null = null;
       try {
@@ -305,7 +318,11 @@ function CheckoutPage() {
           coupon: coupon?.code,
           shipping,
           items: lines.map((l) => ({ slug: l.p.slug, qty: l.qty })),
-          tracking: getTracking(),
+          tracking: {
+            ...getTracking(),
+            event_source_url: window.location.href.split("?")[0] ?? "",
+            ...(getTestEventCode() ? { test_event_code: getTestEventCode() ?? "" } : {}),
+          },
         }),
       });
       const j = (await res.json().catch(() => ({}))) as Partial<Pix> & { error?: string };
@@ -333,6 +350,13 @@ function CheckoutPage() {
         const r = await fetch(`/api/public/pix-status?id=${pix.order_id}`);
         const j = (await r.json()) as { status?: string };
         if (j.status === "paid") {
+          purchaseOnce(pix.order_id, () =>
+            fbqTrack(
+              "Purchase",
+              { value: pix.total_cents / 100, currency: "BRL", content_ids: contentIds.current, content_type: "product", order_id: pix.order_id },
+              { eventID: pix.order_id },
+            ),
+          );
           setPaid(true);
           clearCart();
         }

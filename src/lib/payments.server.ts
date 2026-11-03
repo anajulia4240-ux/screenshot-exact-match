@@ -382,8 +382,41 @@ export async function markOrderPaid(
       value_cents: updated.total_cents,
       data: { order_id: orderId, by },
     });
-  await notifyUtmify(updated, "paid");
+  await Promise.all([notifyUtmify(updated, "paid"), sendMetaForOrder(orderId, updated)]);
   return true;
+}
+
+/** Purchase na Meta CAPI (idempotente por meta_sent). Falha nunca trava o PIX. */
+export async function sendMetaForOrder(
+  orderId: string,
+  preloaded?: Awaited<ReturnType<typeof loadOrder>>,
+): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const order = preloaded ?? (await loadOrder(orderId));
+    if (!order || order.status !== "paid") return { ok: false, error: "not_paid" };
+    const { data: prev } = await db
+      .from("events")
+      .select("id")
+      .eq("type", "meta_sent")
+      .eq("data->>order_id", orderId)
+      .limit(1);
+    if (prev?.length) return { ok: true };
+    const { sendMetaPurchase } = await import("@/lib/meta-capi.server");
+    const r = await sendMetaPurchase(order);
+    if (!r.ok && r.error === "capi_not_configured") {
+      console.warn("[meta] FB_CAPI_ACCESS_TOKEN/FB_PIXEL_ID ausente — envio ignorado");
+      return { ok: false, error: r.error };
+    }
+    await db.from("events").insert({
+      type: r.ok ? "meta_sent" : "meta_failed",
+      value_cents: order.total_cents,
+      data: { order_id: orderId, http: r.http ?? null, error: r.ok ? null : r.error },
+    });
+    return r.ok ? { ok: true } : { ok: false, error: "meta_failed" };
+  } catch (e) {
+    console.error("[meta] erro", e);
+    return { ok: false, error: "meta_failed" };
+  }
 }
 
 export async function loadOrder(orderId: string) {
