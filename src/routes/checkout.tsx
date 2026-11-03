@@ -425,8 +425,8 @@ function CheckoutPage() {
             </div>
           )}
           {step === 0 && (
-            <form onSubmit={submitIdentity} className="space-y-3 rounded-xl border bg-card p-4">
-              <p className="flex items-center gap-2 font-bold">
+            <form onSubmit={submitIdentity} className="space-y-4 rounded-3xl border-2 border-primary/20 bg-card p-5 shadow-sm">
+              <p className="flex items-center gap-2 text-xl font-extrabold text-primary">
                 <User className="h-4 w-4" />
                 Seus dados
               </p>
@@ -470,8 +470,8 @@ function CheckoutPage() {
             </form>
           )}
           {step === 1 && (
-            <form onSubmit={submitAddress} className="space-y-3 rounded-xl border bg-card p-4">
-              <p className="flex items-center gap-2 font-bold">
+            <form onSubmit={submitAddress} className="space-y-4 rounded-3xl border-2 border-primary/20 bg-card p-5 shadow-sm">
+              <p className="flex items-center gap-2 text-xl font-extrabold text-primary">
                 <MapPin className="h-4 w-4" />
                 Endereço de entrega
               </p>
@@ -561,7 +561,7 @@ function CheckoutPage() {
             </form>
           )}
           {step === 2 && (
-            <div className="space-y-3 rounded-xl border bg-card p-4">
+            <div className="space-y-4 rounded-3xl border-2 border-primary/20 bg-card p-5 shadow-sm">
               <p className="font-bold">Revise e pague com PIX</p>
               <div className="rounded-lg bg-muted p-3 text-sm">
                 <p>
