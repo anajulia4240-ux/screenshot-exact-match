@@ -305,7 +305,7 @@ export async function notifyUtmify(
         phone: order.customer_phone ?? null,
         document: str(customer["cpf"]),
         country: "BR",
-        ip: str(t["client_ip"]),
+        ip: str(t["client_ip"]) ?? "0.0.0.0",
       },
       products: products.length
         ? products
