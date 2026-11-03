@@ -100,15 +100,15 @@ function save(customer: Customer, address: Address) {
 function Steps({ step }: { step: number }) {
   const labels = ["Identificação", "Entrega", "Pagamento"];
   return (
-    <ol className="mb-6 flex items-center justify-between gap-2 text-xs font-medium">
+    <ol className="mb-6 flex items-center justify-between gap-2 text-xs font-bold sm:text-sm">
       {labels.map((l, i) => (
         <li key={l} className="flex flex-1 items-center gap-2">
           <span
-            className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${i < step ? "bg-primary text-primary-foreground" : i === step ? "border-2 border-primary text-primary" : "border text-muted-foreground"}`}
+            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${i < step ? "bg-success text-success-foreground" : i === step ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary"}`}
           >
-            {i < step ? <Check className="h-3 w-3" /> : i + 1}
+            {i < step ? <Check className="h-4 w-4" /> : i + 1}
           </span>
-          <span className={i === step ? "text-foreground" : "text-muted-foreground"}>{l}</span>
+          <span className={i === step ? "text-primary" : "text-muted-foreground"}>{l}</span>
         </li>
       ))}
     </ol>
@@ -686,7 +686,15 @@ function CheckoutPage() {
   return (
     <div className="store-theme min-h-screen">
       <StoreHeader />
-      <main className="mx-auto max-w-4xl px-4 py-8">{body}</main>
+      <main className="mx-auto max-w-4xl px-4 py-6">
+        {!pix && (
+          <>
+            <Link to="/" className="text-sm font-semibold text-primary hover:underline">← Continuar comprando</Link>
+            <h1 className="mb-6 mt-2 text-3xl font-extrabold text-primary md:text-4xl">Finalizar compra 💖</h1>
+          </>
+        )}
+        {body}
+      </main>
       <StoreFooter />
     </div>
   );

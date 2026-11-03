@@ -3,7 +3,8 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { track } from "@/lib/track";
 import { toast } from "sonner";
 import { Facebook, Instagram, ShoppingBag, Youtube } from "lucide-react";
-import { useCart } from "@/lib/cart";
+import { setCartOpen, useCart } from "@/lib/cart";
+import { CartDrawer } from "@/components/store/cart-drawer";
 import { Button } from "@/components/ui/button";
 
 export function StoreHeader() {
@@ -28,12 +29,13 @@ export function StoreHeader() {
       <header className="sticky top-0 z-20 border-b bg-card/95 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
           <Link to="/" onClick={onLogo} className="select-none text-2xl font-bold tracking-tight text-primary">byhappy</Link>
-          <Link to="/checkout" className="relative inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium hover:bg-accent" aria-label="Abrir carrinho">
+          <button type="button" onClick={() => setCartOpen(true)} className="relative inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium hover:bg-accent" aria-label="Abrir carrinho">
             <ShoppingBag className="h-4 w-4" /> Carrinho
             {count > 0 && <span className="rounded-full bg-primary px-2 text-xs text-primary-foreground">{count}</span>}
-          </Link>
+          </button>
         </div>
       </header>
+      <CartDrawer />
     </>
   );
 }
