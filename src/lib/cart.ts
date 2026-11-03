@@ -1,4 +1,6 @@
 import { track } from "@/lib/track";
+import { fbqTrack } from "@/lib/fbq";
+import { findProduct } from "@/lib/catalog";
 import { useSyncExternalStore } from "react";
 
 /** Carrinho guardado no navegador: { slug: quantidade }. */
@@ -48,7 +50,13 @@ export function useCartOpen(): boolean {
   );
 }
 
-export const addToCart = (slug: string) => { setQty(slug, (read()[slug] ?? 0) + 1); void track("add_to_cart", { slug }); setCartOpen(true); };
+export const addToCart = (slug: string) => {
+  setQty(slug, (read()[slug] ?? 0) + 1);
+  void track("add_to_cart", { slug });
+  const p = findProduct(slug);
+  fbqTrack("AddToCart", { content_ids: [slug], content_name: p?.name, content_type: "product", value: (p?.price ?? 0) / 100, currency: "BRL", quantity: 1 });
+  setCartOpen(true);
+};
 export const clearCart = () => write({});
 
 export function useCart(): Cart {
