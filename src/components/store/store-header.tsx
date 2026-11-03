@@ -7,6 +7,14 @@ import { setCartOpen, useCart } from "@/lib/cart";
 import { CartDrawer } from "@/components/store/cart-drawer";
 import { Button } from "@/components/ui/button";
 
+/** Menu rosa abaixo do cabeçalho (âncoras da página inicial). */
+const NAV_LINKS: { label: string; to: "/" | "/rastreio"; hash?: string }[] = [
+  { label: "Minha conta", to: "/rastreio" },
+  { label: "Kits promocionais", to: "/", hash: "kits" },
+  { label: "Tratamentos", to: "/", hash: "tratamentos" },
+  { label: "Resultados reais", to: "/", hash: "resultados" },
+];
+
 export function StoreHeader() {
   const cart = useCart();
   const count = Object.values(cart).reduce((a, b) => a + b, 0);
@@ -40,6 +48,19 @@ export function StoreHeader() {
           </div>
         </div>
       </header>
+      <nav aria-label="Menu da loja" className="bg-primary text-primary-foreground">
+        <div className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <ul className="mx-auto flex h-10 w-max min-w-full items-center justify-center gap-5 px-4 text-[11px] font-extrabold uppercase tracking-[0.12em] sm:gap-10 sm:text-xs">
+            {NAV_LINKS.map((l) => (
+              <li key={l.label} className="whitespace-nowrap">
+                <Link to={l.to} hash={l.hash} className="border-b-2 border-transparent pb-0.5 transition-colors hover:border-current">
+                  {l.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </nav>
       <CartDrawer />
     </>
   );
