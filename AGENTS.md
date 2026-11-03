@@ -18,3 +18,4 @@
 - Ad-origin labels always come from `extractAdsInfo` in `src/lib/store.ts`. Why: every tab must show the same campaign/adset/ad for a customer.
 - Store tracking tables are member-only; the storefront must write through `/api/public/*` server routes, never with anon table access. Why: anon write policies let anyone forge or unlock sessions.
 - The storefront lives at `/` and `/checkout` (painel at `/auth` → `/dashboard`); order totals are always recomputed server-side from `src/lib/catalog.ts`. Why: the browser must never set prices.
+- Meta Purchase is sent server-side from `markOrderPaid` via `sendMetaForOrder` (dedup by `meta_sent` event + event_id = order id shared with browser fbq). Why: works even if the customer closes the page, never double counts.
