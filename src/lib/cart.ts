@@ -33,7 +33,22 @@ export function setQty(slug: string, qty: number) {
   write(next);
 }
 
-export const addToCart = (slug: string) => { setQty(slug, (read()[slug] ?? 0) + 1); void track("add_to_cart", { slug }); };
+/** Gaveta do carrinho (aberta/fechada), compartilhada entre cabeçalho e cards. */
+let drawerOpen = false;
+const drawerListeners = new Set<() => void>();
+export function setCartOpen(open: boolean) {
+  drawerOpen = open;
+  drawerListeners.forEach((l) => l());
+}
+export function useCartOpen(): boolean {
+  return useSyncExternalStore(
+    (l) => { drawerListeners.add(l); return () => drawerListeners.delete(l); },
+    () => drawerOpen,
+    () => false,
+  );
+}
+
+export const addToCart = (slug: string) => { setQty(slug, (read()[slug] ?? 0) + 1); void track("add_to_cart", { slug }); setCartOpen(true); };
 export const clearCart = () => write({});
 
 export function useCart(): Cart {
