@@ -14,6 +14,9 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
+import { META_PIXEL_ID, captureTestEventCode, fbqTrack } from "@/lib/fbq";
+
+const UTMIFY_PIXEL_ID = "6a0380c04ebb211fb4d632fe";
 
 function NotFoundComponent() {
   return (
@@ -76,6 +79,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
+    scripts: [
+      {
+        children: `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${META_PIXEL_ID}',{},{agent:'lovable'});fbq('track','PageView');`,
+      },
+      {
+        children: `try{window.pixelId="${UTMIFY_PIXEL_ID}";var a=document.createElement("script");a.setAttribute("async","");a.setAttribute("defer","");a.setAttribute("src","https://cdn.utmify.com.br/scripts/pixel/pixel.js");document.head.appendChild(a);}catch(e){}`,
+      },
+    ],
     links: [
       { rel: "stylesheet", href: appCss },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
@@ -119,6 +130,31 @@ function RootComponent() {
     });
     return () => data.subscription.unsubscribe();
   }, [router, queryClient]);
+
+  // Script de UTMs da Utmify (só após hidratação) + PageView nas trocas de rota (SPA).
+  useEffect(() => {
+    captureTestEventCode();
+    try {
+      if (!document.getElementById("utmify-utms")) {
+        const sc = document.createElement("script");
+        sc.id = "utmify-utms";
+        sc.src = "https://cdn.utmify.com.br/scripts/utms/latest.js";
+        sc.async = true;
+        sc.defer = true;
+        sc.setAttribute("data-utmify-prevent-xcod-sck", "");
+        sc.setAttribute("data-utmify-prevent-subids", "");
+        document.head.appendChild(sc);
+      }
+    } catch {
+      /* nunca quebra a página */
+    }
+    let last = window.location.pathname;
+    return router.subscribe("onResolved", ({ toLocation }) => {
+      if (toLocation.pathname === last) return;
+      last = toLocation.pathname;
+      fbqTrack("PageView");
+    });
+  }, [router]);
 
   return (
     <QueryClientProvider client={queryClient}>
