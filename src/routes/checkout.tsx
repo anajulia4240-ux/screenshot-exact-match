@@ -11,6 +11,7 @@ import {
   Minus,
   Plus,
   ShieldCheck,
+  Trash2,
   User,
 } from "lucide-react";
 import { toast } from "sonner";
