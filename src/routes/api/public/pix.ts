@@ -22,6 +22,7 @@ const Body = z.object({
     state: z.string().trim().length(2),
   }),
   coupon: z.string().trim().max(40).optional(),
+  shipping: z.enum(["sedex", "jadlog"]).optional(),
   items: z
     .array(z.object({ slug: z.string().max(200), qty: z.number().int().min(1).max(20) }))
     .min(1)
@@ -97,7 +98,7 @@ export const Route = createFileRoute("/api/public/pix")({
           client_user_agent: ua,
           customer: { cpf },
           address: { ...b.address, cep: onlyDigits(b.address.cep) },
-          shipping: { method: "gratis", price_cents: 0 },
+          shipping: { method: b.shipping ?? "sedex", price_cents: 0 },
           ...(couponCode ? { coupon: { code: couponCode, discount_cents: discount } } : {}),
           subtotal_cents: subtotal,
         };

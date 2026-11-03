@@ -26,6 +26,9 @@ import { clearCart, setQty, useCart } from "@/lib/cart";
 import { brl } from "@/lib/store";
 import { isValidCpf, isValidPhone, maskCep, maskCpf, maskPhone, onlyDigits } from "@/lib/br";
 import { Button } from "@/components/ui/button";
+import { SHIPPING, arrivalLabel, type ShippingId } from "@/lib/shipping";
+import correiosLogo from "@/assets/correios-logo.png.asset.json";
+import jadlogLogo from "@/assets/jadlog-logo.png.asset.json";
 import { Input } from "@/components/ui/input";
 import { StoreFooter, StoreHeader } from "@/components/store/store-header";
 
@@ -136,6 +139,8 @@ function CheckoutPage() {
   const [paid, setPaid] = useState(false);
   const [copied, setCopied] = useState(false);
   const [summaryOpen, setSummaryOpen] = useState(false);
+  const [shipping, setShipping] = useState<ShippingId>("sedex");
+  const shipOpt = SHIPPING.find((o) => o.id === shipping) ?? SHIPPING[0]!;
   const generating = useRef(false);
 
   const lines = Object.entries(cart).flatMap(([slug, qty]) => {
@@ -298,6 +303,7 @@ function CheckoutPage() {
             neighborhood: address.neighborhood || undefined,
           },
           coupon: coupon?.code,
+          shipping,
           items: lines.map((l) => ({ slug: l.p.slug, qty: l.qty })),
           tracking: getTracking(),
         }),
@@ -558,22 +564,23 @@ function CheckoutPage() {
               </div>
               <div className="space-y-2 pt-2">
                 <p className="text-sm font-semibold">Forma de entrega</p>
-                <label className="flex cursor-pointer items-center gap-3 rounded-2xl border-2 border-primary bg-card p-4 shadow-sm">
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                    <Truck className="h-5 w-5" />
-                  </span>
-                  <span className="flex-1">
-                    <span className="block text-sm font-semibold">Frete grátis</span>
-                    <span className="block text-xs text-muted-foreground">7 a 12 dias úteis</span>
-                  </span>
-                  <span className="text-right">
-                    <b className="block text-sm text-success">Grátis</b>
-                  </span>
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                    <Check className="h-3 w-3" />
-                  </span>
-                  <input type="radio" checked readOnly className="sr-only" aria-label="Frete grátis" />
-                </label>
+                {SHIPPING.map((o) => {
+                  const on = shipping === o.id;
+                  return (
+                    <label key={o.id} className={`flex cursor-pointer items-center gap-3 rounded-2xl border-2 bg-card p-4 shadow-sm ${on ? "border-primary" : "border-border"}`}>
+                      <img src={o.id === "sedex" ? correiosLogo.url : jadlogLogo.url} alt={o.name} width={64} height={32} className="h-8 w-16 shrink-0 object-contain" />
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-semibold">{o.name}</span>
+                        <span className="block text-xs text-muted-foreground">{arrivalLabel(o)}</span>
+                      </span>
+                      <b className="text-sm text-success">Grátis</b>
+                      <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${on ? "bg-primary text-primary-foreground" : "border"}`}>
+                        {on && <Check className="h-3 w-3" />}
+                      </span>
+                      <input type="radio" name="shipping" checked={on} onChange={() => setShipping(o.id)} className="sr-only" aria-label={o.name} />
+                    </label>
+                  );
+                })}
               </div>
               <div className="flex gap-2">
                 <Button type="button" variant="outline" onClick={() => goto(0)}>
@@ -600,7 +607,8 @@ function CheckoutPage() {
                 <div className="flex items-start gap-3 p-4">
                   <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                   <div className="flex-1 text-muted-foreground">
-                    <p className="font-semibold text-foreground">Entrega • Frete grátis</p>
+                    <p className="font-semibold text-foreground">Entrega • {shipOpt.name} • Frete grátis</p>
+                    <p>{arrivalLabel(shipOpt)}</p>
                     <p>{address.street}, {address.number}{address.complement ? ` - ${address.complement}` : ""}</p>
                     <p>{address.city}/{address.state} • {maskCep(address.cep)}</p>
                   </div>
