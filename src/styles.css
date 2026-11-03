@@ -108,6 +108,7 @@
 
 /* Tema da loja byhappy (aplicado só nas páginas da loja). */
 .store-theme {
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
   --background: oklch(0.985 0.012 350);
   --foreground: oklch(0.25 0.04 340);
   --card: oklch(1 0 0);
