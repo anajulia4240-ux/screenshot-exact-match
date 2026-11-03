@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { getSessionId, getTracking, track } from "@/lib/track";
 import {
   Check,
+  ChevronDown,
   CheckCircle2,
   Copy,
   Loader2,
@@ -13,6 +14,11 @@ import {
   ShieldCheck,
   Trash2,
   User,
+  Truck,
+  Tag,
+  Headphones,
+  KeyRound,
+  QrCode,
 } from "lucide-react";
 import { toast } from "sonner";
 import { findProduct } from "@/lib/catalog";
@@ -100,15 +106,16 @@ function save(customer: Customer, address: Address) {
 function Steps({ step }: { step: number }) {
   const labels = ["Identificação", "Entrega", "Pagamento"];
   return (
-    <ol className="mb-6 flex items-center justify-between gap-2 text-xs font-bold sm:text-sm">
+    <ol className="mb-6 flex items-center gap-2 text-xs font-semibold sm:text-sm">
       {labels.map((l, i) => (
-        <li key={l} className="flex flex-1 items-center gap-2">
+        <li key={l} className={`flex min-w-0 items-center gap-2 ${i > 0 ? "flex-1" : ""}`}>
+          {i > 0 && <span className={`h-0.5 min-w-4 flex-1 rounded-full ${i <= step ? "bg-success" : "bg-border"}`} />}
           <span
             className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${i < step ? "bg-success text-success-foreground" : i === step ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary"}`}
           >
             {i < step ? <Check className="h-4 w-4" /> : i + 1}
           </span>
-          <span className={i === step ? "text-primary" : "text-muted-foreground"}>{l}</span>
+          <span className={`hidden sm:inline ${i === step ? "text-primary" : "text-muted-foreground"}`}>{l}</span>
         </li>
       ))}
     </ol>
@@ -127,6 +134,8 @@ function CheckoutPage() {
   const [coupon, setCoupon] = useState<{ code: string; percent: number } | null>(null);
   const [pix, setPix] = useState<Pix | null>(null);
   const [paid, setPaid] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [summaryOpen, setSummaryOpen] = useState(false);
   const generating = useRef(false);
 
   const lines = Object.entries(cart).flatMap(([slug, qty]) => {
@@ -333,6 +342,8 @@ function CheckoutPage() {
     try {
       await navigator.clipboard.writeText(pix.pix_code);
       toast.success("Código PIX copiado!");
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2500);
     } catch {
       toast.error("Não consegui copiar. Selecione o código e copie manualmente.");
     }
@@ -342,14 +353,16 @@ function CheckoutPage() {
   const body = (() => {
     if (paid && pix) {
       return (
-        <div className="rounded-xl border bg-card p-6 text-center">
-          <CheckCircle2 className="mx-auto h-12 w-12 text-green-600" />
-          <h1 className="mt-3 text-2xl font-bold">Pagamento confirmado!</h1>
+        <div className="mx-auto max-w-md rounded-3xl border bg-card p-8 text-center shadow-sm">
+          <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-success/10">
+            <CheckCircle2 className="h-9 w-9 text-success" />
+          </span>
+          <h1 className="mt-4 text-2xl font-bold">Pagamento confirmado!</h1>
           <p className="mt-2 text-muted-foreground">
             Obrigada, {customer.name.split(" ")[0]}! Recebemos {brl(pix.total_cents)}. Você vai
             receber as atualizações do pedido no WhatsApp.
           </p>
-          <Button asChild className="mt-4">
+          <Button asChild size="lg" className="mt-6 h-12 w-full rounded-2xl font-semibold">
             <Link to="/">Voltar à loja</Link>
           </Button>
         </div>
@@ -357,41 +370,41 @@ function CheckoutPage() {
     }
     if (pix) {
       return (
-        <div className="mx-auto max-w-md space-y-4 rounded-xl border bg-card p-5 text-center">
-          <h1 className="text-xl font-bold">Pague com PIX para finalizar</h1>
-          <p className="text-3xl font-bold text-primary">{brl(pix.total_cents)}</p>
-          {pix.qr_image && (
-            <img
-              src={pix.qr_image}
-              alt="QR Code PIX"
-              width={220}
-              height={220}
-              className="mx-auto h-56 w-56 rounded-md border bg-white p-2"
-            />
-          )}
-          <div className="rounded-md border bg-muted p-2 text-left font-mono text-xs break-all">
-            {pix.pix_code}
+        <div className="mx-auto max-w-md space-y-4">
+          <div className="text-center">
+            <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <QrCode className="h-6 w-6" />
+            </span>
+            <h1 className="mt-3 text-2xl font-bold">Seu PIX está pronto!</h1>
+            <p className="mt-1 text-sm text-muted-foreground">Valor a pagar</p>
+            <p className="text-4xl font-bold text-primary">{brl(pix.total_cents)}</p>
           </div>
-          <Button className="w-full" size="lg" onClick={copyPix}>
-            <Copy className="h-4 w-4" />
-            Copiar código PIX
-          </Button>
-          <ol className="space-y-1 text-left text-sm text-muted-foreground">
-            <li>
-              1. Abra o app do seu banco e escolha <b>PIX Copia e Cola</b>
-              {pix.qr_image ? " ou leia o QR Code" : ""}.
-            </li>
-            <li>2. Cole o código e confirme o pagamento.</li>
-            <li>3. Pronto! Esta tela atualiza sozinha quando o pagamento cair.</li>
+          <div className="space-y-4 rounded-3xl border bg-card p-5 shadow-sm">
+            {pix.qr_image && (
+              <img src={pix.qr_image} alt="QR Code PIX" width={240} height={240} className="mx-auto h-60 w-60 rounded-2xl border bg-card p-3" />
+            )}
+            <div className="rounded-2xl bg-muted p-3 text-left font-mono text-xs break-all text-muted-foreground">{pix.pix_code}</div>
+            <Button className="h-14 w-full rounded-2xl text-base font-semibold uppercase tracking-wide shadow-lg" size="lg" onClick={() => void copyPix()}>
+              {copied ? <Check className="h-5 w-5" /> : <Copy className="h-5 w-5" />}
+              {copied ? "Código copiado!" : "Copiar código PIX"}
+            </Button>
+            <div className="flex items-center justify-center gap-2 rounded-2xl bg-warning/15 p-3 text-sm font-semibold">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Aguardando confirmação do pagamento…
+            </div>
+          </div>
+          <ol className="space-y-3 rounded-3xl border bg-card p-5 text-sm">
+            {[
+              `Abra o app do seu banco e escolha PIX Copia e Cola${pix.qr_image ? " ou leia o QR Code" : ""}.`,
+              "Cole o código e confirme o pagamento.",
+              "Pronto! Esta tela atualiza sozinha quando o pagamento for confirmado.",
+            ].map((t, i) => (
+              <li key={t} className="flex gap-3">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">{i + 1}</span>
+                <span className="text-muted-foreground">{t}</span>
+              </li>
+            ))}
           </ol>
-          <p className="flex items-center justify-center gap-2 text-sm font-medium">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Aguardando pagamento…
-          </p>
-          <p className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
-            <ShieldCheck className="h-3 w-3" />
-            Compra segura • Produto original com garantia
-          </p>
         </div>
       );
     }
@@ -406,8 +419,8 @@ function CheckoutPage() {
       );
     }
     return (
-      <div className="grid gap-6 md:grid-cols-[1fr_320px]">
-        <div>
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="min-w-0">
           <Steps step={step} />
           {saved && step === 0 && (
             <div className="mb-4 flex items-center justify-between gap-2 rounded-xl border border-primary/40 bg-primary/5 p-3 text-sm">
@@ -543,13 +556,25 @@ function CheckoutPage() {
                   }
                 />
               </div>
-              <label className="flex items-center justify-between rounded-lg border border-primary bg-primary/5 p-3 text-sm">
-                <span className="flex items-center gap-2">
-                  <input type="radio" checked readOnly aria-label="Frete grátis" />
-                  Frete grátis • 7 a 12 dias úteis
-                </span>
-                <b className="text-green-600">Grátis</b>
-              </label>
+              <div className="space-y-2 pt-2">
+                <p className="text-sm font-semibold">Forma de entrega</p>
+                <label className="flex cursor-pointer items-center gap-3 rounded-2xl border-2 border-primary bg-card p-4 shadow-sm">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <Truck className="h-5 w-5" />
+                  </span>
+                  <span className="flex-1">
+                    <span className="block text-sm font-semibold">Frete grátis</span>
+                    <span className="block text-xs text-muted-foreground">7 a 12 dias úteis</span>
+                  </span>
+                  <span className="text-right">
+                    <b className="block text-sm text-success">Grátis</b>
+                  </span>
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                    <Check className="h-3 w-3" />
+                  </span>
+                  <input type="radio" checked readOnly className="sr-only" aria-label="Frete grátis" />
+                </label>
+              </div>
               <div className="flex gap-2">
                 <Button type="button" variant="outline" onClick={() => goto(0)}>
                   Voltar
@@ -562,43 +587,58 @@ function CheckoutPage() {
           )}
           {step === 2 && (
             <div className="space-y-4 rounded-3xl border-2 border-primary/20 bg-card p-5 shadow-sm">
-              <p className="font-bold">Revise e pague com PIX</p>
-              <div className="rounded-lg bg-muted p-3 text-sm">
-                <p>
-                  <b>{customer.name}</b> • {maskPhone(customer.phone)}
-                </p>
-                <p className="text-muted-foreground">
-                  {address.street}, {address.number}
-                  {address.complement ? ` - ${address.complement}` : ""} • {address.city}/
-                  {address.state} • {maskCep(address.cep)}
-                </p>
-                <button
-                  type="button"
-                  className="mt-1 text-xs text-primary underline"
-                  onClick={() => goto(1)}
-                >
-                  Alterar
-                </button>
+              <p className="text-xl font-bold">Pagamento</p>
+              <div className="divide-y rounded-2xl border bg-card text-sm">
+                <div className="flex items-start gap-3 p-4">
+                  <User className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                  <div className="flex-1">
+                    <p className="font-semibold">{customer.name}</p>
+                    <p className="text-muted-foreground">{maskPhone(customer.phone)}</p>
+                  </div>
+                  <button type="button" className="text-xs font-semibold text-primary hover:underline" onClick={() => goto(0)}>Alterar</button>
+                </div>
+                <div className="flex items-start gap-3 p-4">
+                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                  <div className="flex-1 text-muted-foreground">
+                    <p className="font-semibold text-foreground">Entrega • Frete grátis</p>
+                    <p>{address.street}, {address.number}{address.complement ? ` - ${address.complement}` : ""}</p>
+                    <p>{address.city}/{address.state} • {maskCep(address.cep)}</p>
+                  </div>
+                  <button type="button" className="text-xs font-semibold text-primary hover:underline" onClick={() => goto(1)}>Alterar</button>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Cupom de desconto"
-                  aria-label="Cupom"
-                  value={couponInput}
-                  onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
-                />
-                <Button type="button" variant="outline" onClick={() => void applyCoupon()}>
-                  Aplicar
-                </Button>
+              <div>
+                <div className="flex items-center gap-2 rounded-2xl border bg-card p-1.5 pl-4 focus-within:border-primary">
+                  <Tag className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <input
+                    placeholder="Cupom de desconto"
+                    aria-label="Cupom"
+                    value={couponInput}
+                    onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                    className="min-w-0 flex-1 bg-transparent text-sm outline-none"
+                  />
+                  <Button type="button" variant="secondary" className="rounded-xl font-semibold" onClick={() => void applyCoupon()}>
+                    Aplicar
+                  </Button>
+                </div>
+                {coupon && (
+                  <p className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-success">
+                    <CheckCircle2 className="h-4 w-4" /> Cupom {coupon.code} aplicado: -{coupon.percent}% ({brl(discount)})
+                  </p>
+                )}
+              </div>
+              <div className="flex items-center justify-between rounded-2xl bg-primary/5 p-4">
+                <span className="text-sm font-semibold">Total a pagar</span>
+                <span className="text-2xl font-bold text-primary">{brl(total)}</span>
               </div>
               <Button
                 size="lg"
-                className="w-full"
+                className="h-14 w-full rounded-2xl text-base font-semibold uppercase tracking-wide shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl"
                 disabled={busy}
                 onClick={() => void generatePix()}
               >
-                {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4" />}
-                Gerar PIX — {brl(total)}
+                {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <Lock className="h-5 w-5" />}
+                {busy ? "Gerando seu PIX…" : `Gerar PIX — ${brl(total)}`}
               </Button>
               <Button type="button" variant="ghost" className="w-full" onClick={() => goto(1)}>
                 Voltar
@@ -606,8 +646,12 @@ function CheckoutPage() {
             </div>
           )}
         </div>
-        <aside className="h-fit space-y-3 rounded-xl border bg-card p-4">
-          <p className="font-bold">Resumo do pedido</p>
+        <aside className="h-fit space-y-3 rounded-3xl border bg-card p-5 shadow-sm md:sticky md:top-24">
+          <button type="button" onClick={() => setSummaryOpen((v) => !v)} className="flex w-full items-center justify-between md:pointer-events-none">
+            <span className="text-lg font-bold">Resumo do seu pedido</span>
+            <span className="flex items-center gap-1 text-sm font-bold text-primary md:hidden">{brl(total)} <ChevronDown className={`h-4 w-4 transition-transform ${summaryOpen ? "rotate-180" : ""}`} /></span>
+          </button>
+          <div className={`${summaryOpen ? "block" : "hidden"} space-y-3 md:block`}>
           <ul className="space-y-3">
             {lines.map(({ p, qty }) => (
               <li key={p.slug} className="flex gap-3">
@@ -665,18 +709,19 @@ function CheckoutPage() {
             </p>
             <p className="flex justify-between">
               <span>Frete</span>
-              <span className="text-green-600">Grátis</span>
+              <span className="text-success">Grátis</span>
             </p>
             {discount > 0 && (
-              <p className="flex justify-between text-green-600">
+              <p className="flex justify-between text-success">
                 <span>Cupom {coupon?.code}</span>
                 <span>-{brl(discount)}</span>
               </p>
             )}
-            <p className="flex justify-between text-lg font-bold">
-              <span>Total</span>
-              <span>{brl(total)}</span>
+            <p className="flex items-end justify-between border-t pt-3">
+              <span className="font-semibold">Total</span>
+              <span className="text-2xl font-bold text-primary">{brl(total)}</span>
             </p>
+          </div>
           </div>
         </aside>
       </div>
@@ -694,6 +739,7 @@ function CheckoutPage() {
           </>
         )}
         {body}
+        <TrustBar />
       </main>
       <StoreFooter />
     </div>
@@ -715,4 +761,22 @@ function pickUtm(t: Record<string, string>): Record<string, string> {
     if (v) out[k] = v;
   }
   return out;
+}
+
+function TrustBar() {
+  const items = [
+    { Icon: Lock, label: "Pagamento protegido" },
+    { Icon: ShieldCheck, label: "Ambiente seguro" },
+    { Icon: KeyRound, label: "Dados protegidos" },
+    { Icon: Headphones, label: "Atendimento ao cliente" },
+  ];
+  return (
+    <ul className="mt-10 grid grid-cols-2 gap-3 border-t pt-6 md:grid-cols-4">
+      {items.map(({ Icon, label }) => (
+        <li key={label} className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Icon className="h-4 w-4 shrink-0 text-primary" strokeWidth={1.5} /> {label}
+        </li>
+      ))}
+    </ul>
+  );
 }
