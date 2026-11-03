@@ -419,8 +419,8 @@ function CheckoutPage() {
       );
     }
     return (
-      <div className="grid gap-6 md:grid-cols-[1fr_320px]">
-        <div>
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="min-w-0">
           <Steps step={step} />
           {saved && step === 0 && (
             <div className="mb-4 flex items-center justify-between gap-2 rounded-xl border border-primary/40 bg-primary/5 p-3 text-sm">
