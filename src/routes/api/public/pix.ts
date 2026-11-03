@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { findProduct } from "@/lib/catalog";
+import { findProduct, priceFor } from "@/lib/catalog";
 import { isValidCpf, isValidPhone, onlyDigits, phoneE164 } from "@/lib/br";
 
 const Body = z.object({
@@ -47,9 +47,12 @@ export const Route = createFileRoute("/api/public/pix")({
         if (!isValidPhone(b.customer.phone))
           return Response.json({ error: "WhatsApp inválido." }, { status: 400 });
 
+        // Preço vem do painel (aba Preços); se não houver, usa o padrão do catálogo.
+        const { loadPriceMap } = await import("@/lib/prices.server");
+        const priceMap = await loadPriceMap();
         const items = b.items.map((i) => {
           const p = findProduct(i.slug);
-          return p ? { slug: p.slug, name: p.name, qty: i.qty, price_cents: p.price } : null;
+          return p ? { slug: p.slug, name: p.name, qty: i.qty, price_cents: priceFor(p.slug, priceMap).price } : null;
         });
         if (items.some((i) => !i))
           return Response.json({ error: "Produto inválido." }, { status: 400 });
