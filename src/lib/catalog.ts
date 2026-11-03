@@ -28,3 +28,45 @@ export const findProduct = (slug: string): Product | undefined => PRODUCTS.find(
 export const isKit = (p: Product): boolean => p.slug.includes("kit") || p.name.startsWith("Kit");
 export const KITS: Product[] = PRODUCTS.filter(isKit);
 export const AVULSOS: Product[] = PRODUCTS.filter((p) => !isKit(p));
+
+// ---------- Preços editáveis pelo painel (aba Preços → app_settings "product_prices") ----------
+export interface PriceOverride {
+  price: number;
+  compareAt: number;
+}
+export type PriceMap = Record<string, PriceOverride>;
+
+/** Preços padrão do código — usados quando o painel não definiu outro valor. */
+const BASE_PRICES: PriceMap = Object.fromEntries(
+  PRODUCTS.map((p) => [p.slug, { price: p.price, compareAt: p.compareAt }]),
+);
+
+export const basePrice = (slug: string): PriceOverride | undefined => BASE_PRICES[slug];
+
+/** Aceita só produtos conhecidos e valores válidos (em centavos). */
+export function sanitizePriceMap(raw: unknown): PriceMap {
+  const out: PriceMap = {};
+  if (!raw || typeof raw !== "object") return out;
+  for (const [slug, v] of Object.entries(raw as Record<string, unknown>)) {
+    if (!BASE_PRICES[slug] || !v || typeof v !== "object") continue;
+    const price = Math.round(Number((v as { price?: unknown }).price));
+    const compareAt = Math.round(Number((v as { compareAt?: unknown }).compareAt));
+    if (!Number.isFinite(price) || price < 100) continue;
+    out[slug] = { price, compareAt: Number.isFinite(compareAt) && compareAt > 0 ? compareAt : 0 };
+  }
+  return out;
+}
+
+/** Preço vigente de um produto (painel > padrão do código). */
+export function priceFor(slug: string, map: PriceMap): PriceOverride {
+  return map[slug] ?? BASE_PRICES[slug] ?? { price: 0, compareAt: 0 };
+}
+
+/** Aplica os preços do painel no catálogo (KITS, AVULSOS e findProduct refletem na hora). */
+export function applyPriceOverrides(map: PriceMap) {
+  for (const p of PRODUCTS) {
+    const o = priceFor(p.slug, map);
+    p.price = o.price;
+    p.compareAt = o.compareAt;
+  }
+}
