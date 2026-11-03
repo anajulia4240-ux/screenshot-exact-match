@@ -28,13 +28,13 @@ export function StoreHeader() {
       </div>
       <header className="sticky top-0 z-20 border-b bg-card/95 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
-          <Link to="/" onClick={onLogo} className="select-none text-2xl font-bold tracking-tight text-primary">byhappy</Link>
-          <div className="flex items-center gap-2">
-          <Link to="/rastreio" className="inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-medium hover:bg-accent sm:px-4">
+          <Link to="/" onClick={onLogo} className="select-none text-xl font-bold tracking-tight text-primary sm:text-2xl">byhappy</Link>
+          <div className="flex items-center gap-1.5 sm:gap-2">
+          <Link to="/rastreio" className="inline-flex items-center gap-1.5 rounded-full border px-3 py-2 text-xs font-medium hover:bg-accent sm:gap-2 sm:px-4 sm:text-sm">
             <PackageSearch className="h-4 w-4" /> <span className="hidden sm:inline">Rastrear pedido</span><span className="sm:hidden">Rastrear</span>
           </Link>
-          <button type="button" onClick={() => setCartOpen(true)} className="relative inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium hover:bg-accent" aria-label="Abrir carrinho">
-            <ShoppingBag className="h-4 w-4" /> Carrinho
+          <button type="button" onClick={() => setCartOpen(true)} className="relative inline-flex items-center gap-1.5 rounded-full border px-3 py-2 text-xs font-medium hover:bg-accent sm:gap-2 sm:px-4 sm:text-sm" aria-label="Abrir carrinho">
+            <ShoppingBag className="h-4 w-4" /> <span className="hidden sm:inline">Carrinho</span>
             {count > 0 && <span className="rounded-full bg-primary px-2 text-xs text-primary-foreground">{count}</span>}
           </button>
           </div>
