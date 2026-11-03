@@ -8,6 +8,8 @@ import { StoreFooter, StoreHeader } from "@/components/store/store-header";
 import { SocialProof } from "@/components/store/social-proof";
 import { VideoSection } from "@/components/store/video-section";
 import { ReviewsSection } from "@/components/store/reviews-section";
+import { PromoBar } from "@/components/store/promo-bar";
+import { WhatsAppButton } from "@/components/store/whatsapp-button";
 import bannerAsset from "@/assets/banner-byhappy.png.asset.json";
 
 export const Route = createFileRoute("/")({
@@ -49,6 +51,7 @@ function StorePage() {
   return (
     <div className="store-theme min-h-screen">
       <StoreHeader />
+      <PromoBar />
       <img src={bannerAsset.url} alt="Promoção byhappy" className="w-full" />
       <section className="mx-auto max-w-6xl px-4 py-10 text-center">
         <h1 className="text-3xl font-bold md:text-4xl">Kits Happy Hair com brindes grátis</h1>
@@ -68,6 +71,7 @@ function StorePage() {
       <ReviewsSection />
       <StoreFooter />
       <SocialProof />
+      <WhatsAppButton />
     </div>
   );
 }
