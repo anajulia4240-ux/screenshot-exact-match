@@ -13,6 +13,11 @@ import {
   ShieldCheck,
   Trash2,
   User,
+  Truck,
+  Tag,
+  Headphones,
+  KeyRound,
+  QrCode,
 } from "lucide-react";
 import { toast } from "sonner";
 import { findProduct } from "@/lib/catalog";
@@ -543,13 +548,25 @@ function CheckoutPage() {
                   }
                 />
               </div>
-              <label className="flex items-center justify-between rounded-lg border border-primary bg-primary/5 p-3 text-sm">
-                <span className="flex items-center gap-2">
-                  <input type="radio" checked readOnly aria-label="Frete grátis" />
-                  Frete grátis • 7 a 12 dias úteis
-                </span>
-                <b className="text-green-600">Grátis</b>
-              </label>
+              <div className="space-y-2 pt-2">
+                <p className="text-sm font-semibold">Forma de entrega</p>
+                <label className="flex cursor-pointer items-center gap-3 rounded-2xl border-2 border-primary bg-card p-4 shadow-sm">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <Truck className="h-5 w-5" />
+                  </span>
+                  <span className="flex-1">
+                    <span className="block text-sm font-semibold">Frete grátis</span>
+                    <span className="block text-xs text-muted-foreground">7 a 12 dias úteis</span>
+                  </span>
+                  <span className="text-right">
+                    <b className="block text-sm text-success">Grátis</b>
+                  </span>
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                    <Check className="h-3 w-3" />
+                  </span>
+                  <input type="radio" checked readOnly className="sr-only" aria-label="Frete grátis" />
+                </label>
+              </div>
               <div className="flex gap-2">
                 <Button type="button" variant="outline" onClick={() => goto(0)}>
                   Voltar
@@ -562,43 +579,58 @@ function CheckoutPage() {
           )}
           {step === 2 && (
             <div className="space-y-4 rounded-3xl border-2 border-primary/20 bg-card p-5 shadow-sm">
-              <p className="font-bold">Revise e pague com PIX</p>
-              <div className="rounded-lg bg-muted p-3 text-sm">
-                <p>
-                  <b>{customer.name}</b> • {maskPhone(customer.phone)}
-                </p>
-                <p className="text-muted-foreground">
-                  {address.street}, {address.number}
-                  {address.complement ? ` - ${address.complement}` : ""} • {address.city}/
-                  {address.state} • {maskCep(address.cep)}
-                </p>
-                <button
-                  type="button"
-                  className="mt-1 text-xs text-primary underline"
-                  onClick={() => goto(1)}
-                >
-                  Alterar
-                </button>
+              <p className="text-xl font-bold">Pagamento</p>
+              <div className="divide-y rounded-2xl border bg-card text-sm">
+                <div className="flex items-start gap-3 p-4">
+                  <User className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                  <div className="flex-1">
+                    <p className="font-semibold">{customer.name}</p>
+                    <p className="text-muted-foreground">{maskPhone(customer.phone)}</p>
+                  </div>
+                  <button type="button" className="text-xs font-semibold text-primary hover:underline" onClick={() => goto(0)}>Alterar</button>
+                </div>
+                <div className="flex items-start gap-3 p-4">
+                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                  <div className="flex-1 text-muted-foreground">
+                    <p className="font-semibold text-foreground">Entrega • Frete grátis</p>
+                    <p>{address.street}, {address.number}{address.complement ? ` - ${address.complement}` : ""}</p>
+                    <p>{address.city}/{address.state} • {maskCep(address.cep)}</p>
+                  </div>
+                  <button type="button" className="text-xs font-semibold text-primary hover:underline" onClick={() => goto(1)}>Alterar</button>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Cupom de desconto"
-                  aria-label="Cupom"
-                  value={couponInput}
-                  onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
-                />
-                <Button type="button" variant="outline" onClick={() => void applyCoupon()}>
-                  Aplicar
-                </Button>
+              <div>
+                <div className="flex items-center gap-2 rounded-2xl border bg-card p-1.5 pl-4 focus-within:border-primary">
+                  <Tag className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <input
+                    placeholder="Cupom de desconto"
+                    aria-label="Cupom"
+                    value={couponInput}
+                    onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                    className="min-w-0 flex-1 bg-transparent text-sm outline-none"
+                  />
+                  <Button type="button" variant="secondary" className="rounded-xl font-semibold" onClick={() => void applyCoupon()}>
+                    Aplicar
+                  </Button>
+                </div>
+                {coupon && (
+                  <p className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-success">
+                    <CheckCircle2 className="h-4 w-4" /> Cupom {coupon.code} aplicado: -{coupon.percent}% ({brl(discount)})
+                  </p>
+                )}
+              </div>
+              <div className="flex items-center justify-between rounded-2xl bg-primary/5 p-4">
+                <span className="text-sm font-semibold">Total a pagar</span>
+                <span className="text-2xl font-bold text-primary">{brl(total)}</span>
               </div>
               <Button
                 size="lg"
-                className="w-full"
+                className="h-14 w-full rounded-2xl text-base font-semibold uppercase tracking-wide shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl"
                 disabled={busy}
                 onClick={() => void generatePix()}
               >
-                {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4" />}
-                Gerar PIX — {brl(total)}
+                {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <Lock className="h-5 w-5" />}
+                {busy ? "Gerando seu PIX…" : `Gerar PIX — ${brl(total)}`}
               </Button>
               <Button type="button" variant="ghost" className="w-full" onClick={() => goto(1)}>
                 Voltar
