@@ -25,27 +25,57 @@ export const asObj = (v: unknown): Record<string, unknown> =>
 export const str = (v: unknown) => (typeof v === "string" ? v : "");
 
 export function siteUrl(): string {
-  return (process.env["SITE_URL"] || "https://byhappyhair.lovable.app").replace(/\/+$/, "");
+  return (process.env["SITE_URL"] || "https://planetamundo.shop").replace(/\/+$/, "");
 }
 
-export function layout(title: string, body: string): string {
+// Mesmo banner da página inicial da loja (URL absoluta para os provedores de e-mail).
+const BANNER_PATH = "/__l5e/assets-v1/4bd3fc91-fb74-461c-a75a-45f81b92f6dc/banner-byhappy.png";
+
+/**
+ * Layout profissional: preheader oculto, banner da loja, cartão branco, selos de confiança
+ * e rodapé com motivo do envio + descadastro (ajuda a não cair no spam).
+ */
+export function layout(title: string, body: string, preheader = ""): string {
+  const site = siteUrl();
   const wa = `https://wa.me/${SUPPORT_WHATSAPP}?text=${encodeURIComponent("Olá! Tenho uma dúvida sobre meu pedido na byhappy.")}`;
-  return `<!doctype html><html lang="pt-BR"><body style="margin:0;background:#fdf2f7;font-family:Arial,Helvetica,sans-serif;color:#222">
-  <div style="max-width:520px;margin:0 auto;padding:24px 16px">
-    <p style="text-align:center;margin:0 0 16px;font-size:26px;font-weight:800;color:${BRAND}">byhappy</p>
-    <div style="background:#fff;border-radius:16px;padding:24px;border:1px solid #f3d3e3">
-      <h1 style="margin:0 0 12px;font-size:22px">${title}</h1>
-      ${body}
-    </div>
-    <p style="text-align:center;font-size:12px;color:#777;margin:16px 0 0">
-      Dúvidas? <a href="${wa}" style="color:${BRAND};font-weight:bold">Fale com a gente no WhatsApp</a><br/>
-      Garantia de 30 dias: se não gostar, devolvemos seu dinheiro.
-    </p>
-  </div></body></html>`;
+  const trust = [
+    ["Frete grátis", "para todo o Brasil"],
+    ["Compra segura", "pagamento via PIX"],
+    ["Garantia 30 dias", "ou seu dinheiro de volta"],
+  ]
+    .map(
+      ([a, b]) =>
+        `<td width="33%" style="padding:8px 4px;text-align:center;font-size:12px;color:#444"><b style="color:${BRAND};font-size:13px">${a}</b><br/>${b}</td>`,
+    )
+    .join("");
+  return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>${escapeHtml(title)}</title></head>
+<body style="margin:0;padding:0;background:#f6f1f4;font-family:Helvetica,Arial,sans-serif;color:#222">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent">${escapeHtml(preheader)}</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f6f1f4"><tr><td align="center" style="padding:24px 12px">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #eedbe5">
+      <tr><td style="padding:18px 24px;text-align:center;border-bottom:1px solid #f3e3ec">
+        <a href="${site}" style="text-decoration:none;font-size:26px;font-weight:800;color:${BRAND};letter-spacing:-0.5px">byhappy</a>
+        <div style="font-size:11px;color:#888;margin-top:2px">Revendedora autorizada Happy Hair</div>
+      </td></tr>
+      <tr><td><a href="${site}"><img src="${site}${BANNER_PATH}" width="600" alt="byhappy — Happy Hair" style="display:block;width:100%;max-width:600px;height:auto;border:0"/></a></td></tr>
+      <tr><td style="padding:28px 28px 8px">
+        <h1 style="margin:0 0 14px;font-size:22px;line-height:1.3;color:#1f1f1f">${title}</h1>
+        <div style="font-size:15px;line-height:1.6;color:#333">${body}</div>
+      </td></tr>
+      <tr><td style="padding:8px 20px 20px"><table role="presentation" width="100%" style="background:#fdf2f7;border-radius:12px"><tr>${trust}</tr></table></td></tr>
+      <tr><td style="padding:18px 28px;background:#faf7f9;border-top:1px solid #f3e3ec;text-align:center;font-size:12px;line-height:1.6;color:#777">
+        Precisa de ajuda? <a href="${wa}" style="color:${BRAND};font-weight:bold">Fale com a gente no WhatsApp</a><br/>
+        Você recebeu este e-mail porque iniciou uma compra em <a href="${site}" style="color:#777">${site.replace(/^https?:\/\//, "")}</a>.<br/>
+        Não quer mais receber? Responda este e-mail com "SAIR".<br/>
+        © ${new Date().getFullYear()} byhappy — Revendedora autorizada Happy Hair
+      </td></tr>
+    </table>
+  </td></tr></table>
+</body></html>`;
 }
 
 export function button(href: string, label: string): string {
-  return `<p style="text-align:center;margin:20px 0 4px"><a href="${href}" style="display:inline-block;background:${BRAND};color:#fff;text-decoration:none;font-weight:bold;padding:14px 28px;border-radius:12px">${label}</a></p>`;
+  return `<table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:22px auto 6px"><tr><td style="background:${BRAND};border-radius:10px"><a href="${href}" style="display:inline-block;color:#ffffff;text-decoration:none;font-weight:bold;font-size:16px;padding:15px 34px">${label}</a></td></tr></table>`;
 }
 
 type OrderLike = {
@@ -187,7 +217,16 @@ export async function deliverEmail(mail: { to: string; subject: string; html: st
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from, to: [mail.to], subject: mail.subject, html: mail.html, text: mail.text }),
+      body: JSON.stringify({
+        from,
+        to: [mail.to],
+        subject: mail.subject,
+        html: mail.html,
+        text: mail.text,
+        // Remetente real para respostas + descadastro: sinais que os provedores usam contra spam.
+        reply_to: from.match(/<([^>]+)>/)?.[1] ?? from,
+        headers: { "List-Unsubscribe": `<mailto:${from.match(/<([^>]+)>/)?.[1] ?? from}?subject=SAIR>` },
+      }),
     });
     if (!res.ok) return `resend_${res.status}: ${(await res.text().catch(() => "")).slice(0, 300)}`;
     return null;
