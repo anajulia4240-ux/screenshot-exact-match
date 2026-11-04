@@ -128,9 +128,9 @@ function buildEmail(kind: Kind, order: OrderLike) {
          <div style="font-size:24px;font-weight:800;letter-spacing:2px;text-align:center;background:#fdf2f7;border:2px dashed ${BRAND};border-radius:12px;padding:12px;color:${BRAND}">${escapeHtml(orderCode)}</div>`
       : "";
     return {
-      subject: `Pagamento confirmado! Pedido #${short} 🎉`,
+      subject: `Pagamento confirmado! Pedido #${short}`,
       html: layout(
-        `Pagamento confirmado, ${first}! 🎉`,
+        `Pagamento confirmado, ${first}!`,
         `<p style="margin:0 0 16px">Recebemos seu pagamento e seu pedido já entrou na fila de envio imediato.</p>
          ${codeBox}
          ${button(trackHref, "Rastrear meu pedido")}
@@ -142,9 +142,9 @@ function buildEmail(kind: Kind, order: OrderLike) {
   }
 
   return {
-    subject: `Seu pedido #${short} foi enviado! 🚚`,
+    subject: `Seu pedido #${short} foi enviado!`,
     html: layout(
-      `Seu pedido está a caminho, ${first}! 🚚`,
+      `Seu pedido está a caminho, ${first}!`,
       `<p style="margin:0 0 12px">Seu pedido foi postado via <b>${escapeHtml(shipName)}</b>.</p>
        ${carrierCode ? `<p style="margin:0 0 6px">Código da transportadora:</p><div style="font-size:20px;font-weight:800;letter-spacing:1px;text-align:center;background:#f3f4f6;border-radius:12px;padding:12px">${escapeHtml(carrierCode)}</div>` : ""}
        ${button(trackHref, "Acompanhar entrega")}
