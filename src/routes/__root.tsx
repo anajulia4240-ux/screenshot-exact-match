@@ -151,15 +151,24 @@ function RootComponent() {
         sc.setAttribute("data-utmify-prevent-xcod-sck", "");
         sc.setAttribute("data-utmify-prevent-subids", "");
         document.head.appendChild(sc);
+    };
+    const enterStore = () => {
+      try {
+        captureTestEventCode();
+        loadUtms();
+        // true = Pixel acabou de carregar e já enviou o PageView desta página.
+        return w.__byLoad?.() ?? false;
+      } catch {
+        return false; /* nunca quebra a página */
       }
-    } catch {
-      /* nunca quebra a página */
-    }
+    };
+    if (isStore(window.location.pathname)) enterStore();
     let last = window.location.pathname;
     return router.subscribe("onResolved", ({ toLocation }) => {
       if (toLocation.pathname === last) return;
       last = toLocation.pathname;
-      fbqTrack("PageView");
+      if (!isStore(toLocation.pathname)) return; // painel/login: nenhum evento
+      if (!enterStore()) fbqTrack("PageView");
     });
   }, [router]);
 
