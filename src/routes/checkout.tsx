@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { getSessionId, getTracking, track } from "@/lib/track";
 import { fbqIdentify, fbqTrack, getTestEventCode, purchaseOnce } from "@/lib/fbq";
@@ -558,6 +558,14 @@ function CheckoutPage() {
     }, paid ? 2500 : 5000);
     return () => window.clearInterval(t);
   }, [pix, paid, orderCode]);
+
+  // Pago + código gerado: leva a cliente para a página de rastreio depois de 5s.
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (!paid || !orderCode) return;
+    const t = window.setTimeout(() => void navigate({ to: "/rastreio", search: { code: orderCode } }), 5000);
+    return () => window.clearTimeout(t);
+  }, [paid, orderCode, navigate]);
 
   /** Grava que a pessoa copiou o código PIX (botão, Ctrl+C ou toque longo no código). */
   function markPixCopied() {
