@@ -1,7 +1,7 @@
 import { track } from "@/lib/track";
 
-/** Número de suporte da loja (DDI + DDD + número, só dígitos). TROCAR PELO NÚMERO REAL. */
-export const SUPPORT_WHATSAPP = "5511999999999";
+/** Número de suporte da loja (DDI + DDD + número, só dígitos). */
+export const SUPPORT_WHATSAPP = "5551997416724";
 
 export function WhatsAppButton() {
   const href = `https://wa.me/${SUPPORT_WHATSAPP}?text=${encodeURIComponent("Olá! Preciso de ajuda com meu pedido na byhappy.")}`;
