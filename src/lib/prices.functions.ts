@@ -1,3 +1,4 @@
+import type { Json } from "@/integrations/supabase/types";
 // Server fns da aba Preços: leitura pública e gravação só para administradores.
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
@@ -36,7 +37,7 @@ export const savePrices = createServerFn({ method: "POST" })
     const { error } = await supabaseAdmin
       .from("app_settings")
       .upsert(
-        { key: PRICES_KEY, value: clean, updated_at: new Date().toISOString() },
+        { key: PRICES_KEY, value: clean as unknown as Json, updated_at: new Date().toISOString() },
         { onConflict: "key" },
       );
     if (error) {
