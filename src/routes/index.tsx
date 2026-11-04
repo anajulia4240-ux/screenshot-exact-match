@@ -173,8 +173,8 @@ function KitChooser({ recommended }: { recommended: string }) {
 }
 
 function Faq() {
-  const sedex = SHIPPING.find((s) => s.id === "sedex") ?? SHIPPING[0]!;
-  const jadlog = SHIPPING.find((s) => s.id === "jadlog");
+  const free = SHIPPING.find((s) => s.id === "gratis") ?? SHIPPING[0]!;
+  const fast = SHIPPING.filter((s) => s.price_cents > 0);
   const items = [
     {
       q: "O produto é original?",
@@ -182,9 +182,7 @@ function Faq() {
     },
     {
       q: "Quanto tempo demora para chegar?",
-      a: `O frete é grátis para todo o Brasil. Pelo SEDEX, o prazo é de ${sedex.minDays} a ${sedex.maxDays} dias úteis${
-        jadlog ? `; pela Jadlog, de ${jadlog.minDays} a ${jadlog.maxDays} dias úteis` : ""
-      }, contados após a confirmação do pagamento. Você acompanha tudo em "Rastrear pedido", no topo do site.`,
+      a: `Temos frete grátis para todo o Brasil, com prazo de ${free.minDays} a ${free.maxDays} dias úteis. Se quiser receber mais rápido, escolha no checkout: ${fast.map((s) => `${s.name} por ${brl(s.price_cents)} (${s.minDays} a ${s.maxDays} dias úteis)`).join(" ou ")}. O prazo conta a partir da confirmação do pagamento, e você acompanha tudo em "Rastrear pedido", no topo do site.`,
     },
     {
       q: "Como tomar o Happy Hair?",
