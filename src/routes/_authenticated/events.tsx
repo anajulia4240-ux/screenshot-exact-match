@@ -682,7 +682,7 @@ function EventsBoard({ events, leads, sessions, orders }: { events: Ev[]; leads:
                     key={s.campaign}
                     type="button"
                     onClick={() => setCampaignFilter(active ? null : s.campaign)}
-                    className={`min-w-[150px] rounded-lg border px-3 py-2 text-left transition ${
+                    className={`min-w-[172px] rounded-lg border px-3 py-2 text-left transition ${
                       active ? "border-pink-400 bg-pink-50 shadow-sm" : "bg-background hover:border-pink-200 hover:bg-pink-50/40"
                     }`}
                   >
@@ -724,7 +724,7 @@ function EventsBoard({ events, leads, sessions, orders }: { events: Ev[]; leads:
               key={f.id}
               type="button"
               onClick={() => setFilter(f.id)}
-              className={`h-8 rounded-full border px-3.5 text-sm font-medium transition ${
+              className={`h-8 shrink-0 whitespace-nowrap rounded-full border px-3.5 text-sm font-medium transition ${
                 filter === f.id ? "border-foreground bg-foreground text-background" : "bg-background hover:bg-muted"
               }`}
             >
