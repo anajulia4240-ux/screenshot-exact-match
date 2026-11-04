@@ -69,7 +69,7 @@ export function IdentifyModal() {
         onInteractOutside={(event) => event.preventDefault()}
         className="store-theme w-[calc(100%-32px)] max-w-lg max-h-[90dvh] overflow-y-auto rounded-3xl border-0 bg-card px-6 py-8 sm:rounded-3xl sm:px-8 sm:py-10">
         <form onSubmit={(event) => void submit(event)} className="text-center">
-          <img src={logo.url} alt="Happy Hair" className="mx-auto h-12 w-auto object-contain sm:h-14" />
+          <img src={logo.url} alt="Happy Hair" className="mx-auto h-12 w-auto rounded-md bg-primary p-1 object-contain sm:h-14" />
           <DialogTitle className="mt-6 text-2xl font-normal text-primary sm:text-3xl">Ganhe <strong className="font-bold">10% OFF</strong></DialogTitle>
           <DialogDescription className="mt-2 text-base">Na sua primeira compra</DialogDescription>
           <div className="mt-7 space-y-4">
