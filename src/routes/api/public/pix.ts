@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
+import { builtinCoupon } from "@/lib/coupon-defaults";
 import { findProduct, priceFor } from "@/lib/catalog";
 import { isValidCpf, isValidPhone, onlyDigits, phoneE164 } from "@/lib/br";
 
@@ -67,11 +68,13 @@ export const Route = createFileRoute("/api/public/pix")({
         let discount = 0;
         if (b.coupon) {
           const code = b.coupon.toUpperCase();
-          const { data: c } = await db
+          const { data: row } = await db
             .from("coupons")
             .select("code, percent, min_value_cents, active, expires_at")
             .eq("code", code)
             .maybeSingle();
+          // HAPPY10 (cupom de identificação) vale mesmo sem cadastro na aba Cupons.
+          const c = row ?? builtinCoupon(code);
           const ok =
             c &&
             c.active &&
