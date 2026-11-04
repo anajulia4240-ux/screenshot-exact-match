@@ -22,19 +22,15 @@ export const Route = createFileRoute("/api/public/pix-status")({
         if (order.status === "paid") return paidResponse();
         if (order.status !== "pending") return Response.json({ status: order.status });
 
-        const tracking = (order.tracking ?? {}) as { payment?: { transaction_id?: string } };
-        const tx = tracking.payment?.transaction_id;
-        if (!tx) return Response.json({ status: "pending" });
-        const remote = await pay.getFruitfyOrder(tx);
-        if (pay.isPaidStatus(remote.status, remote.paid_at)) {
-          await pay.markOrderPaid(order.id, "gateway");
-          return paidResponse();
-        }
+        // "src=admin" = botão "Verificar no gateway" do painel (só muda o rótulo de origem).
+        const by = new URL(request.url).searchParams.get("src") === "admin" ? "manual" : "pix_screen";
+        const r = await pay.confirmOrderFromGateway(order, by);
+        if (r.paid) return paidResponse();
         return Response.json({
           status:
-            remote.status === "canceled" ||
-            remote.status === "failed" ||
-            remote.status === "refused"
+            r.remoteStatus === "canceled" ||
+            r.remoteStatus === "failed" ||
+            r.remoteStatus === "refused"
               ? "cancelled"
               : "pending",
         });

@@ -345,7 +345,7 @@ function OrderRow({ order, open, onToggle }: { order: Order; open: boolean; onTo
   async function checkGateway() {
     setBusy("check");
     try {
-      const r = await fetch(`/api/public/pix-status?id=${encodeURIComponent(order.id)}`);
+      const r = await fetch(`/api/public/pix-status?id=${encodeURIComponent(order.id)}&src=admin`);
       const j = (await r.json().catch(() => ({}))) as { status?: string };
       if (j.status === "paid") toast.success("Pagamento confirmado pelo gateway!");
       else toast.info(`Gateway: ${j.status ?? "sem resposta"} — ainda não pago.`);
@@ -418,7 +418,7 @@ function OrderRow({ order, open, onToggle }: { order: Order; open: boolean; onTo
         <td className="px-3 py-3">
           <span className={`inline-block rounded-full border px-2 py-0.5 text-xs font-bold ${st.cls}`}>{st.l}</span>
           {order.confirmed_by && isPaid && (
-            <p className="mt-0.5 text-[11px] text-muted-foreground">{order.confirmed_by === "manual" ? "manual" : "gateway"}</p>
+            <p className="mt-0.5 text-[11px] text-muted-foreground">{CONFIRM_LABEL[order.confirmed_by] ?? "tela do PIX"}</p>
           )}
         </td>
         <td className="px-3 py-3 text-xs text-muted-foreground">
