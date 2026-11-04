@@ -2,15 +2,27 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { track } from "@/lib/track";
 import { toast } from "sonner";
-import { PackageSearch, Facebook, Instagram, ShoppingBag, Youtube } from "lucide-react";
+import { PackageSearch, Facebook, Instagram, Menu, ShoppingBag, Youtube } from "lucide-react";
 import { setCartOpen, useCart } from "@/lib/cart";
 import { CartDrawer } from "@/components/store/cart-drawer";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+
+/** Menu da loja: links na linha do logo (computador) e gaveta ☰ (celular). */
+const NAV_LINKS: { label: string; to: "/" | "/rastreio"; hash?: string; desktop?: boolean }[] = [
+  { label: "Início", to: "/" },
+  { label: "Kits promocionais", to: "/", hash: "kits", desktop: true },
+  { label: "Tratamentos", to: "/", hash: "tratamentos", desktop: true },
+  { label: "Resultados reais", to: "/", hash: "resultados", desktop: true },
+  { label: "Dúvidas", to: "/", hash: "faq", desktop: true },
+  { label: "Rastrear pedido", to: "/rastreio" },
+];
 
 export function StoreHeader() {
   const cart = useCart();
   const count = Object.values(cart).reduce((a, b) => a + b, 0);
   const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = useState(false);
   const clicks = useRef<{ n: number; t: number }>({ n: 0, t: 0 });
   useEffect(() => { void track("page_view"); }, []);
   // 3 cliques rápidos no nome abrem o login do painel (que pede a senha).
@@ -28,7 +40,35 @@ export function StoreHeader() {
       </div>
       <header className="sticky top-0 z-20 border-b bg-card/95 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
-          <Link to="/" onClick={onLogo} className="select-none text-xl font-bold tracking-tight text-primary sm:text-2xl">byhappy</Link>
+          <div className="flex items-center gap-1">
+            <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+              <SheetTrigger asChild>
+                <button type="button" aria-label="Abrir menu" className="-ml-2 flex h-10 w-10 items-center justify-center rounded-full hover:bg-accent lg:hidden">
+                  <Menu className="h-5 w-5" />
+                </button>
+              </SheetTrigger>
+              <SheetContent side="left" className="store-theme w-72 p-0">
+                <SheetHeader className="border-b px-5 py-4">
+                  <SheetTitle className="text-left text-2xl font-bold tracking-tight text-primary">byhappy</SheetTitle>
+                </SheetHeader>
+                <nav aria-label="Menu" className="flex flex-col p-2">
+                  {NAV_LINKS.map((l) => (
+                    <Link key={l.label} to={l.to} hash={l.hash} onClick={() => setMenuOpen(false)} className="rounded-lg px-3 py-3 text-[15px] font-semibold text-foreground hover:bg-accent">
+                      {l.label}
+                    </Link>
+                  ))}
+                </nav>
+              </SheetContent>
+            </Sheet>
+            <Link to="/" onClick={onLogo} className="select-none text-xl font-bold tracking-tight text-primary sm:text-2xl">byhappy</Link>
+          </div>
+          <nav aria-label="Menu da loja" className="hidden items-center gap-6 text-sm font-semibold text-foreground/80 lg:flex">
+            {NAV_LINKS.filter((l) => l.desktop).map((l) => (
+              <Link key={l.label} to={l.to} hash={l.hash} className="transition-colors hover:text-primary">
+                {l.label}
+              </Link>
+            ))}
+          </nav>
           <div className="flex items-center gap-1.5 sm:gap-2">
           <Link to="/rastreio" className="inline-flex items-center gap-1.5 rounded-full border px-3 py-2 text-xs font-medium hover:bg-accent sm:gap-2 sm:px-4 sm:text-sm">
             <PackageSearch className="h-4 w-4" /> <span className="hidden sm:inline">Rastrear pedido</span><span className="sm:hidden">Rastrear</span>
