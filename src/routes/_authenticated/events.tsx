@@ -103,6 +103,12 @@ const PAGE_SIZE = 24;
 
 const EVENT_SCORE: Record<string, number> = {
   page_view: 10,
+  identification_shown: 10,
+  identification_skipped: 10,
+  section_view: 15,
+  video_play: 20,
+  whatsapp_click: 25,
+  coupon_applied: 65,
   click: 15,
   product_view: 20,
   add_to_cart: 40,
@@ -419,6 +425,18 @@ function timelineLabel(e: Ev & { _count?: number }): { icon: string; label: stri
       return { icon: "📋", label: "Copiou PIX" };
     case "pix_paid":
       return { icon: "✅", label: "PIX Pago" };
+    case "identification_shown":
+      return { icon: "🪪", label: "Viu o pop-up de desconto" };
+    case "identification_skipped":
+      return { icon: "🙈", label: "Fechou o pop-up sem se identificar" };
+    case "section_view":
+      return { icon: "📍", label: "Chegou na seção", detail: str(d["label"]) ?? str(d["section"]) };
+    case "video_play":
+      return { icon: "▶️", label: "Assistiu vídeo", detail: str(d["label"]) };
+    case "whatsapp_click":
+      return { icon: "💬", label: "Clicou no WhatsApp", detail: str(d["label"]) };
+    case "coupon_applied":
+      return { icon: "🎟️", label: "Aplicou cupom", detail: str(d["code"]) };
     default:
       return { icon: "•", label: e.type };
   }
