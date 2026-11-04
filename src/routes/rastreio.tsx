@@ -24,7 +24,7 @@ export const Route = createFileRoute("/rastreio")({
 
 interface Order {
   code: string; status: string; created_at: string; paid_at: string | null;
-  first_name: string; carrier: string; tracking_code: string | null; items: string[];
+  first_name: string; carrier: string; tracking_code: string | null; items: string[]; stage?: string | null;
 }
 
 const STEPS = [
@@ -35,8 +35,8 @@ const STEPS = [
 ];
 
 function stepOf(o: Order): number {
-  if (o.status === "delivered") return 3;
-  if (o.status === "shipped" || o.tracking_code) return 2;
+  if (o.status === "delivered" || o.stage === "delivered") return 3;
+  if (o.status === "shipped" || o.stage === "shipped" || o.tracking_code) return 2;
   if (o.status === "paid" || o.paid_at) return 1;
   return 0;
 }
