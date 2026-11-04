@@ -8,8 +8,13 @@ const Body = z.union([
 ]);
 
 interface Row {
-  id: string; status: string; created_at: string; paid_at: string | null;
-  customer_name: string | null; items: unknown; tracking: unknown;
+  id: string;
+  status: string;
+  created_at: string;
+  paid_at: string | null;
+  customer_name: string | null;
+  items: unknown;
+  tracking: unknown;
 }
 
 /** Rastreio público: devolve só status, datas, transportadora e primeiro nome (sem dados pessoais). */
@@ -25,16 +30,38 @@ export const Route = createFileRoute("/api/public/rastreio")({
         if ("cpf" in parsed.data) {
           const cpf = onlyDigits(parsed.data.cpf);
           if (!isValidCpf(cpf)) return Response.json({ error: "CPF inválido." }, { status: 400 });
-          const { data, error } = await db.from("orders").select(cols).eq("tracking->customer->>cpf", cpf).order("created_at", { ascending: false }).limit(10);
+          const { data, error } = await db
+            .from("orders")
+            .select(cols)
+            .eq("tracking->customer->>cpf", cpf)
+            .order("created_at", { ascending: false })
+            .limit(10);
           if (error) return Response.json({ error: "Erro ao buscar." }, { status: 500 });
           rows = data as Row[];
         } else {
-          const code = parsed.data.code.toUpperCase().replace(/^#/, "");
-          const { data, error } = await db.from("orders").select(cols).eq("tracking->>tracking_code", code).limit(5);
-          if (error) return Response.json({ error: "Erro ao buscar." }, { status: 500 });
-          rows = data as Row[];
+          const code = parsed.data.code.toUpperCase().replace(/^#/, "").replace(/\s+/g, "");
+          // 1) código da loja (BHY…)  2) código da transportadora  3) nº curto do pedido
+          const { data: byOrderCode } = await db
+            .from("orders")
+            .select(cols)
+            .eq("tracking->>order_code", code)
+            .limit(5);
+          rows = (byOrderCode ?? []) as Row[];
+          if (!rows.length) {
+            const { data, error } = await db
+              .from("orders")
+              .select(cols)
+              .eq("tracking->>tracking_code", code)
+              .limit(5);
+            if (error) return Response.json({ error: "Erro ao buscar." }, { status: 500 });
+            rows = data as Row[];
+          }
           if (!rows.length && /^[0-9A-F]{8}$/.test(code)) {
-            const { data: d2 } = await db.from("orders").select(cols).order("created_at", { ascending: false }).limit(500);
+            const { data: d2 } = await db
+              .from("orders")
+              .select(cols)
+              .order("created_at", { ascending: false })
+              .limit(500);
             rows = ((d2 ?? []) as Row[]).filter((r) => r.id.slice(0, 8).toUpperCase() === code);
           }
         }
@@ -44,6 +71,7 @@ export const Route = createFileRoute("/api/public/rastreio")({
           const items = Array.isArray(r.items) ? (r.items as { name?: string; qty?: number }[]) : [];
           return {
             code: r.id.slice(0, 8).toUpperCase(),
+            order_code: typeof t["order_code"] === "string" ? t["order_code"] : null,
             status: r.status,
             created_at: r.created_at,
             paid_at: r.paid_at,

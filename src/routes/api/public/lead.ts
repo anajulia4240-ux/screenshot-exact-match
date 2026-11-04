@@ -6,11 +6,12 @@ const Body = z.object({
   session_id: z.string().uuid().nullable().optional(),
   name: z.string().trim().min(2).max(120),
   phone: z.string().trim().min(8).max(30),
-  email: z.string().trim().email().max(200),
+  // A etapa Identificação pede só nome + WhatsApp; o e-mail chega depois, no pagamento.
+  email: z.string().trim().email().max(200).optional(),
   utm: z.record(z.string().max(60), z.string().max(200)).optional(),
 });
 
-/** Etapa 1 do checkout: grava/atualiza o lead na hora (recuperação por e-mail/WhatsApp e campanha). */
+/** Checkout: grava/atualiza o lead na hora (recuperação por WhatsApp/e-mail e campanha). */
 export const Route = createFileRoute("/api/public/lead")({
   server: {
     handlers: {
@@ -31,7 +32,7 @@ export const Route = createFileRoute("/api/public/lead")({
         const base = {
           name: b.name,
           phone: b.phone,
-          email: b.email.toLowerCase(),
+          ...(b.email ? { email: b.email.toLowerCase() } : {}),
           ip,
           user_agent: ua,
           last_seen_at: now,
@@ -44,6 +45,7 @@ export const Route = createFileRoute("/api/public/lead")({
         };
 
         let leadId: string | null = null;
+        let isNew = false;
         if (b.lead_id) {
           const { data: cur } = await db
             .from("leads")
@@ -67,12 +69,13 @@ export const Route = createFileRoute("/api/public/lead")({
             .single();
           if (error) return Response.json({ error: "Não foi possível salvar." }, { status: 500 });
           leadId = data.id;
+          isNew = true;
         }
         if (b.session_id)
           await db.from("sessions").update({ lead_id: leadId }).eq("id", b.session_id);
-        await db
-          .from("events")
-          .insert({
+        // Só registra "lead identificado" uma vez por lead (a 2ª chamada só completa o e-mail).
+        if (isNew || !b.email)
+          await db.from("events").insert({
             type: "lead_identified",
             lead_id: leadId,
             session_id: b.session_id ?? null,
