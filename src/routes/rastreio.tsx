@@ -1,12 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Check, Loader2, Package, Truck, CreditCard, Home, Copy } from "lucide-react";
+import { Loader2, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StoreFooter, StoreHeader } from "@/components/store/store-header";
 import { maskCpf, onlyDigits } from "@/lib/br";
-import { SHIPPING, addBusinessDays } from "@/lib/shipping";
+import { SHIPPING } from "@/lib/shipping";
+import { TRACKING_FLOW, currentStepIndex, stepDate } from "@/lib/tracking-flow";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/rastreio")({
@@ -38,25 +39,12 @@ interface Order {
   stage?: string | null;
 }
 
-const STEPS = [
-  { label: "Pedido recebido", icon: Package },
-  { label: "Pagamento aprovado — preparando envio", icon: CreditCard },
-  { label: "Em transporte", icon: Truck },
-  { label: "Entregue", icon: Home },
-];
-
-function stepOf(o: Order): number {
-  if (o.status === "delivered" || o.stage === "delivered") return 3;
-  if (o.status === "shipped" || o.stage === "shipped" || o.tracking_code) return 2;
-  if (o.status === "paid" || o.paid_at) return 1;
-  return 0;
-}
-
 function OrderCard({ o }: { o: Order }) {
-  const current = stepOf(o);
+  const flowIdx = o.status === "delivered" ? TRACKING_FLOW.length - 1 : currentStepIndex(o.paid_at);
+  const current = flowIdx < 0 ? 0 : flowIdx === TRACKING_FLOW.length - 1 ? 3 : 1;
   const ship = SHIPPING.find((s) => s.id === o.carrier) ?? SHIPPING[0]!;
   const carrierName = ship.id === "gratis" ? "Correios/Jadlog" : ship.name;
-  const eta = o.paid_at ? addBusinessDays(new Date(o.paid_at), ship.maxDays).toLocaleDateString("pt-BR") : null;
+  const eta = o.paid_at ? stepDate(o.paid_at, 10).toLocaleDateString("pt-BR") : null;
   const copy = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -77,23 +65,32 @@ function OrderCard({ o }: { o: Order }) {
           <li key={i}>{i}</li>
         ))}
       </ul>
-      <ol className="mt-5 space-y-3">
-        {STEPS.map((s, i) => (
-          <li key={s.label} className="flex items-center gap-3">
-            <span
-              className={cn(
-                "flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
-                i <= current ? "bg-success text-success-foreground" : "bg-muted text-muted-foreground",
-              )}
-            >
-              {i < current ? <Check className="h-4 w-4" /> : <s.icon className="h-4 w-4" />}
-            </span>
-            <span className={cn("text-sm", i === current ? "font-semibold text-foreground" : "text-muted-foreground")}>
-              {s.label}
-            </span>
-          </li>
-        ))}
-      </ol>
+      {current === 0 ? (
+        <p className="mt-5 rounded-2xl bg-muted p-3 text-sm text-muted-foreground">Aguardando confirmação do pagamento.</p>
+      ) : (
+        <ol className="relative mt-5 space-y-4 border-l-2 border-muted pl-6">
+          {TRACKING_FLOW.slice(0, flowIdx + 1)
+            .map((s, i) => ({ s, i }))
+            .reverse()
+            .map(({ s, i }) => (
+              <li key={s.title} className="relative">
+                <span
+                  className={cn(
+                    "absolute -left-[33px] flex h-4 w-4 items-center justify-center rounded-full ring-4 ring-card",
+                    i === flowIdx ? "bg-primary" : "bg-success",
+                  )}
+                />
+                <p className={cn("text-sm", i === flowIdx ? "font-bold text-foreground" : "font-medium text-muted-foreground")}>
+                  {s.title}
+                </p>
+                <p className="text-xs text-muted-foreground">{s.text}</p>
+                <p className="text-[11px] text-muted-foreground">
+                  {o.paid_at && stepDate(o.paid_at, s.day).toLocaleDateString("pt-BR")}
+                </p>
+              </li>
+            ))}
+        </ol>
+      )}
       <div className="mt-4 space-y-1 rounded-2xl bg-muted p-3 text-sm">
         {o.order_code && (
           <p className="flex items-center gap-1.5">
@@ -116,12 +113,6 @@ function OrderCard({ o }: { o: Order }) {
             Previsão de entrega: <b>até {eta}</b>
           </p>
         )}
-        {current === 1 && !o.tracking_code && (
-          <p className="text-muted-foreground">
-            Envio imediato: seu pedido já está na fila de postagem. O código da transportadora aparece aqui assim que for postado.
-          </p>
-        )}
-        {current === 0 && <p className="text-muted-foreground">Aguardando confirmação do pagamento.</p>}
       </div>
     </article>
   );
