@@ -96,7 +96,7 @@ interface Group {
 // ---------- Regras da jornada ----------
 
 /** Eventos internos do servidor (envio pra Utmify/Meta) não entram na jornada do lead. */
-const SYSTEM_TYPES = /^(utmify_|meta_)/;
+const SYSTEM_TYPES = /^(utmify_|meta_|email_)/;
 const ABANDON_AFTER_MS = 15 * 60 * 1000;
 const ONLINE_WINDOW_MS = 60 * 1000;
 const PAGE_SIZE = 24;
