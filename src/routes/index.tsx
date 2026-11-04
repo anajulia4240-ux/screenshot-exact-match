@@ -11,6 +11,8 @@ import { VideoSection } from "@/components/store/video-section";
 import { ReviewsSection } from "@/components/store/reviews-section";
 import { PromoBar } from "@/components/store/promo-bar";
 import { WhatsAppButton } from "@/components/store/whatsapp-button";
+import { IdentifyModal } from "@/components/store/identify-modal";
+import { JourneyTracker } from "@/components/store/journey-tracker";
 import bannerAsset from "@/assets/banner-byhappy.png.asset.json";
 
 export const Route = createFileRoute("/")({
@@ -260,6 +262,8 @@ function StorePage() {
       <StoreFooter />
       <SocialProof />
       <WhatsAppButton />
+      <IdentifyModal />
+      <JourneyTracker />
     </div>
   );
 }
