@@ -390,6 +390,11 @@ export async function markOrderPaid(
   if (!updated) return false; // já estava pago (ou não existe): não reprocessa
   // Código de rastreio da loja (BHY…) gerado na hora da aprovação.
   await import("./order-code.server").then((m) => m.ensureOrderCode(orderId)).catch(() => null);
+  // E-mail "Pagamento confirmado" com o código de rastreio (Resend; nunca trava o pagamento).
+  await withTimeout(
+    import("./email.server").then((e) => e.sendOrderEmail(orderId, "paid")).catch(() => null),
+    5000,
+  );
   await db
     .from("events")
     .insert({
