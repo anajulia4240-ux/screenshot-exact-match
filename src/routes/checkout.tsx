@@ -87,6 +87,11 @@ const EMPTY_ADDRESS: Address = {
   state: "",
 };
 
+/** Nome com sobrenome + WhatsApp válido: identificação completa. */
+function identified(c: { name: string; phone: string }): boolean {
+  return c.name.trim().split(/\s+/).length >= 2 && isValidPhone(c.phone);
+}
+
 /** Estilo padrão dos campos do checkout. */
 const FIELD = "h-11 rounded-xl bg-background text-[15px] shadow-none focus-visible:ring-primary/30";
 
@@ -251,8 +256,11 @@ function CheckoutPage() {
     });
     const s = loadSaved();
     // Veio do pop-up de identificação (só nome + WhatsApp): já preenche direto.
-    if (s && !s.customer.email) setCustomer(s.customer);
-    else setSaved(s);
+    if (s && !s.customer.email) {
+      setCustomer(s.customer);
+      // Já se identificou no pop-up (nome + WhatsApp): pula a Identificação e vai direto para a entrega.
+      if (identified(s.customer)) setStep(1);
+    } else setSaved(s);
   }, []);
 
   const goto = (n: number) => {
@@ -271,6 +279,7 @@ function CheckoutPage() {
     setCustomer(saved.customer);
     setAddress(saved.address);
     setSaved(null);
+    if (identified(saved.customer)) goto(1);
   }
 
   // ---------- Lead (nome + WhatsApp na etapa 1; e-mail completa no pagamento) ----------
@@ -807,9 +816,14 @@ function CheckoutPage() {
             done={step > 0}
             onEdit={() => goto(0)}
             summary={
-              <p className="truncate">
-                <span className="font-semibold text-foreground">{customer.name}</span> • {maskPhone(customer.phone)}
-              </p>
+              <>
+                <p className="truncate">
+                  <span className="font-semibold text-foreground">{customer.name}</span> • {maskPhone(customer.phone)}
+                </p>
+                {!coupon && (
+                  <p className="font-semibold text-success">🎁 10% OFF liberado — aplique o {IDENTIFICATION_COUPON.code} no pagamento</p>
+                )}
+              </>
             }
           >
             <form onSubmit={submitIdentity} className="grid grid-cols-1 gap-4">
