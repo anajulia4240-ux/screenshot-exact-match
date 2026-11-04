@@ -23,3 +23,18 @@ export const confirmOrderManual = createServerFn({ method: "POST" })
     const changed = await markOrderPaid(data.id, "manual");
     return { ok: true, already: !changed };
   });
+
+/** Avisa a cliente por e-mail que o pedido foi postado (chamado ao salvar o código da transportadora). */
+export const notifyOrderShipped = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => idSchema.parse(d))
+  .handler(async ({ data, context }): Promise<{ ok: boolean; skipped?: string; error?: string }> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: isAdmin } = await supabaseAdmin.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (!isAdmin) throw new Error("Apenas administradores podem enviar avisos.");
+    const { sendOrderEmail } = await import("./email.server");
+    return sendOrderEmail(data.id, "shipped");
+  });
