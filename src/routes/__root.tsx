@@ -76,8 +76,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Painel Admin — Loja" },
-      { name: "description", content: "Painel privado da loja: pedidos, eventos e visitantes." },
+      { title: "byhappy | Kits Happy Hair com Brindes e Frete Grátis" },
+      { name: "description", content: "Kits Happy Hair originais com brindes grátis, frete grátis e pagamento via PIX. Revendedora autorizada." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
