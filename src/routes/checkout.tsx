@@ -32,7 +32,7 @@ import { clearCart, setQty, useCart } from "@/lib/cart";
 import { brl } from "@/lib/store";
 import { isValidCpf, isValidPhone, maskCep, maskCpf, maskPhone, onlyDigits } from "@/lib/br";
 import { Button } from "@/components/ui/button";
-import { SHIPPING, arrivalLabel, type ShippingId } from "@/lib/shipping";
+import { DEFAULT_SHIPPING, SHIPPING, arrivalLabel, shippingById, type ShippingId } from "@/lib/shipping";
 import correiosLogo from "@/assets/correios-logo.png.asset.json";
 import jadlogLogo from "@/assets/jadlog-logo.png.asset.json";
 import { Input } from "@/components/ui/input";
@@ -230,8 +230,8 @@ function CheckoutPage() {
   const [codeCopied, setCodeCopied] = useState(false);
   const [copied, setCopied] = useState(false);
   const [summaryOpen, setSummaryOpen] = useState(false);
-  const [shipping, setShipping] = useState<ShippingId>("sedex");
-  const shipOpt = SHIPPING.find((o) => o.id === shipping) ?? SHIPPING[0]!;
+  const [shipping, setShipping] = useState<ShippingId>(DEFAULT_SHIPPING);
+  const shipOpt = shippingById(shipping);
   const generating = useRef(false);
   const contentIds = useRef<string[]>([]);
 
@@ -241,7 +241,8 @@ function CheckoutPage() {
   });
   const subtotal = lines.reduce((s, l) => s + l.p.price * l.qty, 0);
   const discount = coupon ? Math.round((subtotal * coupon.percent) / 100) : 0;
-  const total = subtotal - discount;
+  const shippingCents = shipOpt.price_cents;
+  const total = subtotal - discount + shippingCents;
   const itemCount = lines.reduce((n, l) => n + l.qty, 0);
   const compareTotal = lines.reduce((s, l) => s + Math.max(l.p.compareAt, l.p.price) * l.qty, 0);
   const savings = compareTotal - total;
@@ -597,8 +598,12 @@ function CheckoutPage() {
             <span className="font-medium">{brl(subtotal)}</span>
           </p>
           <p className="flex justify-between">
-            <span className="text-muted-foreground">Frete ({shipOpt.name})</span>
-            <span className="font-semibold text-success">Grátis</span>
+            <span className="text-muted-foreground">Frete{shippingCents ? ` (${shipOpt.name})` : ""}</span>
+            {shippingCents ? (
+              <span className="font-medium">{brl(shippingCents)}</span>
+            ) : (
+              <span className="font-semibold text-success">Grátis</span>
+            )}
           </p>
           {discount > 0 && (
             <p className="flex justify-between text-success">
@@ -621,7 +626,7 @@ function CheckoutPage() {
         </div>
 
         <ul className="hidden space-y-2 border-t px-5 py-4 text-xs text-muted-foreground md:block">
-          <li className="flex items-center gap-2"><Truck className="h-4 w-4 text-primary" strokeWidth={1.75} /> Frete grátis para todo o Brasil</li>
+          <li className="flex items-center gap-2"><Truck className="h-4 w-4 text-primary" strokeWidth={1.75} /> Opção de frete grátis para todo o Brasil</li>
           <li className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-primary" strokeWidth={1.75} /> Pagamento seguro via PIX</li>
           <li className="flex items-center gap-2"><Headphones className="h-4 w-4 text-primary" strokeWidth={1.75} /> Atendimento pelo WhatsApp</li>
         </ul>
@@ -692,7 +697,7 @@ function CheckoutPage() {
               { done: true, title: "Pagamento aprovado", text: "Seu pedido foi confirmado." },
               { done: true, title: "Código de rastreio gerado", text: "Acompanhe tudo pela página Rastrear pedido." },
               { done: false, title: "Envio imediato", text: "Seu pedido entra agora na fila de postagem. Avisamos pelo WhatsApp." },
-              { done: false, title: "Entrega com frete grátis", text: arrivalLabel(shipOpt) },
+              { done: false, title: shippingCents ? `Entrega via ${shipOpt.name}` : "Entrega com frete grátis", text: arrivalLabel(shipOpt) },
             ].map((s) => (
               <li key={s.title} className="flex gap-3">
                 <span
@@ -894,7 +899,7 @@ function CheckoutPage() {
           <Section
             n={2}
             title="Entrega"
-            subtitle="Frete grátis para todo o Brasil."
+            subtitle="Frete grátis ou receba mais rápido."
             icon={MapPin}
             active={step === 1}
             done={step > 1}
@@ -909,7 +914,7 @@ function CheckoutPage() {
                   • {address.city}/{address.state} • {maskCep(address.cep)}
                 </p>
                 <p className="text-success">
-                  {shipOpt.name} • Grátis • {arrivalLabel(shipOpt)}
+                  {shipOpt.name} • {shippingCents ? brl(shippingCents) : "Grátis"} • {arrivalLabel(shipOpt)}
                 </p>
               </>
             }
@@ -1029,12 +1034,23 @@ function CheckoutPage() {
                       <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${on ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/40"}`}>
                         {on && <Check className="h-3 w-3" strokeWidth={3} />}
                       </span>
-                      <img src={o.id === "sedex" ? correiosLogo.url : jadlogLogo.url} alt={o.name} width={56} height={28} className="h-7 w-14 shrink-0 object-contain" />
+                      {o.logo ? (
+                        <img src={o.logo === "correios" ? correiosLogo.url : jadlogLogo.url} alt={o.name} width={56} height={28} className="h-7 w-14 shrink-0 object-contain" />
+                      ) : (
+                        <span className="flex h-7 w-14 shrink-0 items-center justify-center rounded-md bg-success/10 text-success">
+                          <Truck className="h-4 w-4" />
+                        </span>
+                      )}
                       <span className="min-w-0 flex-1">
                         <span className="block text-sm font-semibold">{o.name}</span>
                         <span className="block text-xs text-muted-foreground">{arrivalLabel(o)}</span>
+                        <span className="block text-[11px] text-muted-foreground/80">{o.description}</span>
                       </span>
-                      <span className="rounded-full bg-success/10 px-2.5 py-1 text-xs font-bold text-success">Grátis</span>
+                      {o.price_cents ? (
+                        <span className="shrink-0 text-sm font-bold">{brl(o.price_cents)}</span>
+                      ) : (
+                        <span className="shrink-0 rounded-full bg-success/10 px-2.5 py-1 text-xs font-bold text-success">Grátis</span>
+                      )}
                       <input type="radio" name="shipping" checked={on} onChange={() => setShipping(o.id)} className="sr-only" aria-label={o.name} />
                     </label>
                   );
@@ -1106,7 +1122,7 @@ function CheckoutPage() {
                     </span>
                     <span className="block text-xs text-muted-foreground">
                       Toque para aplicar o cupom <b className="font-mono text-foreground">{IDENTIFICATION_COUPON.code}</b> e pagar{" "}
-                      <b className="text-foreground">{brl(subtotal - Math.round((subtotal * IDENTIFICATION_COUPON.percent) / 100))}</b>
+                      <b className="text-foreground">{brl(subtotal - Math.round((subtotal * IDENTIFICATION_COUPON.percent) / 100) + shippingCents)}</b>
                     </span>
                   </span>
                   <span className="shrink-0 rounded-lg bg-success px-3 py-2 text-xs font-bold uppercase text-success-foreground">

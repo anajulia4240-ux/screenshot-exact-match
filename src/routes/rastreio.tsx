@@ -55,6 +55,7 @@ function stepOf(o: Order): number {
 function OrderCard({ o }: { o: Order }) {
   const current = stepOf(o);
   const ship = SHIPPING.find((s) => s.id === o.carrier) ?? SHIPPING[0]!;
+  const carrierName = ship.id === "gratis" ? "Correios/Jadlog" : ship.name;
   const eta = o.paid_at ? addBusinessDays(new Date(o.paid_at), ship.maxDays).toLocaleDateString("pt-BR") : null;
   const copy = async (text: string) => {
     try {
@@ -103,11 +104,11 @@ function OrderCard({ o }: { o: Order }) {
           </p>
         )}
         <p>
-          Transportadora: <b>{ship.name}</b>
+          Transportadora: <b>{carrierName}</b>
         </p>
         {o.tracking_code && (
           <p>
-            Código {ship.name}: <b className="font-mono">{o.tracking_code}</b>
+            Código {carrierName}: <b className="font-mono">{o.tracking_code}</b>
           </p>
         )}
         {eta && current < 3 && (
