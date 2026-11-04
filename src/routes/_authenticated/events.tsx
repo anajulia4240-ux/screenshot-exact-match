@@ -164,7 +164,7 @@ const TIMELINE_ACCENT: Record<string, string> = {
   pix_paid: "border-l-emerald-500 bg-emerald-50/70",
 };
 
-type FilterId = "all" | "recent" | "visited" | "cart" | "checkout" | "pix" | "paid" | "abandoned";
+type FilterId = "all" | "recent" | "visited" | "cart" | "checkout" | "pix" | "copied" | "paid" | "abandoned";
 
 const FILTERS: { id: FilterId; label: string }[] = [
   { id: "all", label: "Todos" },
@@ -173,6 +173,7 @@ const FILTERS: { id: FilterId; label: string }[] = [
   { id: "cart", label: "Adicionou ao carrinho" },
   { id: "checkout", label: "Abriu checkout" },
   { id: "pix", label: "Gerou PIX" },
+  { id: "copied", label: "Copiou PIX" },
   { id: "paid", label: "Pagou" },
   { id: "abandoned", label: "Abandonou" },
 ];
@@ -547,6 +548,7 @@ interface CampaignStat {
   leads: number;
   pix: number;
   paid: number;
+  copied: number;
   revenue: number;
 }
 
@@ -582,9 +584,10 @@ function EventsBoard({ events, leads, sessions, orders }: { events: Ev[]; leads:
       const order = orderOf.get(g.key) ?? null;
       const attr = campaignOf.get(g.key) ?? null;
       const campaign = attr?.campaign || "Sem campanha";
-      const cur = map.get(campaign) ?? { campaign, origin: attr?.origin ?? "Direto", leads: 0, pix: 0, paid: 0, revenue: 0 };
+      const cur = map.get(campaign) ?? { campaign, origin: attr?.origin ?? "Direto", leads: 0, pix: 0, copied: 0, paid: 0, revenue: 0 };
       cur.leads += 1;
       if (hasType(g.events, "pix_generated") || order) cur.pix += 1;
+      if (hasType(g.events, "pix_copied")) cur.copied += 1;
       if (hasType(g.events, "pix_paid") || order?.status === "paid") {
         cur.paid += 1;
         cur.revenue += order?.total_cents ?? 0;
@@ -619,6 +622,9 @@ function EventsBoard({ events, leads, sessions, orders }: { events: Ev[]; leads:
           break;
         case "pix":
           if (!hasType(evs, "pix_generated") && !order) return false;
+          break;
+        case "copied":
+          if (!hasType(evs, "pix_copied")) return false;
           break;
         case "paid":
           if (!paid) return false;
@@ -684,7 +690,7 @@ function EventsBoard({ events, leads, sessions, orders }: { events: Ev[]; leads:
                       {s.campaign}
                     </div>
                     <div className="max-w-[180px] truncate text-[9px] font-semibold text-muted-foreground">{s.origin}</div>
-                    <div className="mt-1.5 grid grid-cols-3 gap-1 text-center">
+                    <div className="mt-1.5 grid grid-cols-4 gap-1 text-center">
                       <div>
                         <div className="text-[13px] font-black text-slate-700">{s.leads}</div>
                         <div className="text-[8px] font-bold uppercase text-slate-400">leads</div>
@@ -692,6 +698,10 @@ function EventsBoard({ events, leads, sessions, orders }: { events: Ev[]; leads:
                       <div>
                         <div className="text-[13px] font-black text-amber-600">{s.pix}</div>
                         <div className="text-[8px] font-bold uppercase text-slate-400">pix</div>
+                      </div>
+                      <div>
+                        <div className="text-[13px] font-black text-blue-600">{s.copied}</div>
+                        <div className="text-[8px] font-bold uppercase text-slate-400">copiou</div>
                       </div>
                       <div>
                         <div className="text-[13px] font-black text-emerald-600">{s.paid}</div>
@@ -848,6 +858,7 @@ function LeadCard({
   const phone = order?.customer_phone ?? group.lead?.phone ?? null;
   const name = order?.customer_name ?? (group.lead?.name || null);
   const pixGenerated = hasType(evs, "pix_generated") || !!order;
+  const copiedPix = hasType(evs, "pix_copied");
   const stage = recoveryStage(evs, paid);
   const lastCheckout = evs
     .filter((e) => e.type.startsWith("checkout_"))
@@ -858,7 +869,7 @@ function LeadCard({
   const lastCart = [...evs].reverse().find((e) => e.type === "add_to_cart");
   const product = str(lastCart?.data?.["name"]) ?? str(lastCart?.data?.["title"]) ?? "seu pedido";
   const timeline = compactTimeline(evs);
-  const statusLabel = paid ? "PAGOU" : status === "PIX" ? "GEROU PIX" : status;
+  const statusLabel = paid ? "PAGOU" : status === "PIX" ? (copiedPix ? "COPIOU PIX" : "GEROU PIX") : status;
   const dot = paid
     ? "bg-emerald-500"
     : status === "PIX"
@@ -912,6 +923,11 @@ function LeadCard({
               {order.coupon_code}
             </span>
           )}
+          {copiedPix && (
+            <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700">
+              📋 Copiou o PIX
+            </span>
+          )}
           <span className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${TEMP_STYLE[temp.label]}`}>
             {temp.label} · {temp.score}
           </span>
@@ -937,10 +953,19 @@ function LeadCard({
           <div className="rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2">
             <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
               <span className="text-[11px] font-bold text-slate-600">📋 Dados preenchidos no checkout</span>
-              <span
-                className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-black uppercase text-white ${pixGenerated ? "bg-amber-500" : "bg-red-500"}`}
-              >
-                {pixGenerated ? "PIX gerado" : "PIX não gerado"}
+              <span className="flex shrink-0 flex-wrap justify-end gap-1">
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[9px] font-black uppercase text-white ${pixGenerated ? "bg-amber-500" : "bg-red-500"}`}
+                >
+                  {pixGenerated ? "PIX gerado" : "PIX não gerado"}
+                </span>
+                {pixGenerated && (
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-[9px] font-black uppercase text-white ${copiedPix ? "bg-blue-600" : "bg-slate-400"}`}
+                  >
+                    {copiedPix ? "Copiou o código" : "Não copiou"}
+                  </span>
+                )}
               </span>
             </div>
             <div className="mt-1 space-y-0.5 text-[11px] text-slate-700">
