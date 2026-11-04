@@ -91,8 +91,11 @@ const addressOf = (o: Order) => {
   return parts.join(" — ");
 };
 const shippingOf = (o: Order) => {
-  const m = str(obj(tr(o)["shipping"])["method"]);
-  return m === "jadlog" ? "Jadlog" : m ? m.toUpperCase() : "SEDEX";
+  const sh = obj(tr(o)["shipping"]);
+  const m = str(sh["method"]);
+  const price = typeof sh["price_cents"] === "number" ? (sh["price_cents"] as number) : 0;
+  const name = m === "jadlog" ? "Jadlog" : m === "gratis" ? "Frete Grátis" : m ? m.toUpperCase() : "SEDEX";
+  return price ? `${name} (${brl(price)})` : `${name} (grátis)`;
 };
 const gatewayOf = (o: Order) => {
   const p = obj(tr(o)["payment"]);

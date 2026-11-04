@@ -52,7 +52,7 @@ const stageOf = (o: Row): StageId => {
 const carrierOf = (o: Row) => {
   const ship = t(o)["shipping"];
   const m = ship && typeof ship === "object" ? (ship as Record<string, unknown>)["method"] : null;
-  return m === "jadlog" ? "Jadlog" : "SEDEX";
+  return m === "jadlog" ? "Jadlog" : m === "gratis" ? "Correios/Jadlog" : "SEDEX";
 };
 const orderCodeOf = (o: Row) => (typeof t(o)["order_code"] === "string" ? (t(o)["order_code"] as string) : "");
 const shortId = (o: Row) => o.id.slice(0, 8).toUpperCase();
