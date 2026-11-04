@@ -11,24 +11,24 @@ type Kind = "paid" | "shipped";
 
 const BRAND = "#d6408b";
 
-function escapeHtml(s: string): string {
+export function escapeHtml(s: string): string {
   return s.replace(/[&<>"']/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] as string,
   );
 }
 
-const brl = (cents: number) =>
+export const brl = (cents: number) =>
   (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-const asObj = (v: unknown): Record<string, unknown> =>
+export const asObj = (v: unknown): Record<string, unknown> =>
   v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : {};
-const str = (v: unknown) => (typeof v === "string" ? v : "");
+export const str = (v: unknown) => (typeof v === "string" ? v : "");
 
-function siteUrl(): string {
+export function siteUrl(): string {
   return (process.env["SITE_URL"] || "https://byhappyhair.lovable.app").replace(/\/+$/, "");
 }
 
-function layout(title: string, body: string): string {
+export function layout(title: string, body: string): string {
   const wa = `https://wa.me/${SUPPORT_WHATSAPP}?text=${encodeURIComponent("Olá! Tenho uma dúvida sobre meu pedido na byhappy.")}`;
   return `<!doctype html><html lang="pt-BR"><body style="margin:0;background:#fdf2f7;font-family:Arial,Helvetica,sans-serif;color:#222">
   <div style="max-width:520px;margin:0 auto;padding:24px 16px">
@@ -44,7 +44,7 @@ function layout(title: string, body: string): string {
   </div></body></html>`;
 }
 
-function button(href: string, label: string): string {
+export function button(href: string, label: string): string {
   return `<p style="text-align:center;margin:20px 0 4px"><a href="${href}" style="display:inline-block;background:${BRAND};color:#fff;text-decoration:none;font-weight:bold;padding:14px 28px;border-radius:12px">${label}</a></p>`;
 }
 
@@ -176,4 +176,22 @@ export async function sendOrderEmail(
   });
   if (error) console.error("[email]", error);
   return error ? { ok: false, error } : { ok: true };
+}
+
+/** Envia um e-mail qualquer pela Resend. Retorna o erro (ou null se deu certo). */
+export async function deliverEmail(mail: { to: string; subject: string; html: string; text: string }): Promise<string | null> {
+  const apiKey = process.env["RESEND_API_KEY"];
+  if (!apiKey) return "resend_not_configured";
+  const from = process.env["RESEND_FROM"] || "byhappy <onboarding@resend.dev>";
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ from, to: [mail.to], subject: mail.subject, html: mail.html, text: mail.text }),
+    });
+    if (!res.ok) return `resend_${res.status}: ${(await res.text().catch(() => "")).slice(0, 300)}`;
+    return null;
+  } catch (e) {
+    return `resend_unreachable: ${String(e).slice(0, 200)}`;
+  }
 }
