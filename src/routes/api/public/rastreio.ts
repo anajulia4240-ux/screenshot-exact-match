@@ -50,6 +50,7 @@ export const Route = createFileRoute("/api/public/rastreio")({
             first_name: (r.customer_name ?? "").split(" ")[0] ?? "",
             carrier: typeof ship["method"] === "string" ? ship["method"] : "sedex",
             tracking_code: typeof t["tracking_code"] === "string" ? t["tracking_code"] : null,
+            stage: typeof t["tracking_stage"] === "string" ? t["tracking_stage"] : null,
             items: items.map((i) => `${i.qty ?? 1}x ${i.name ?? "Produto"}`),
           };
         });
