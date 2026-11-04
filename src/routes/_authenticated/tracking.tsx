@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorState } from "@/components/admin/common";
 import { brl, fmtDateTime } from "@/lib/store";
 import { logActivity } from "@/lib/audit";
+import { notifyOrderShipped } from "@/lib/orders-admin.functions";
 
 export const Route = createFileRoute("/_authenticated/tracking")({
   head: () => ({
@@ -215,6 +216,15 @@ function TrackingRow({ order }: { order: Row }) {
     setStage(nextStage);
     await logActivity("tracking.update");
     toast.success("Rastreio salvo — a cliente já vê a atualização.");
+    // Código novo da transportadora: avisa a cliente por e-mail (uma vez por código).
+    if (clean && clean !== codeOf(order)) {
+      notifyOrderShipped({ data: { id: order.id } })
+        .then((r) => {
+          if (r.ok && !r.skipped) toast.success("E-mail de envio mandado para a cliente.");
+          else if (r.error) toast.error("O e-mail de envio não foi enviado. Confira a Resend.");
+        })
+        .catch(() => {});
+    }
     void qc.invalidateQueries({ queryKey: ["tracking-orders"] });
   }
 
