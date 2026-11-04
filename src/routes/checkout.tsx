@@ -249,7 +249,10 @@ function CheckoutPage() {
       content_ids: lines.map((l) => l.p.slug),
       content_type: "product",
     });
-    setSaved(loadSaved());
+    const s = loadSaved();
+    // Veio do pop-up de identificação (só nome + WhatsApp): já preenche direto.
+    if (s && !s.customer.email) setCustomer(s.customer);
+    else setSaved(s);
   }, []);
 
   const goto = (n: number) => {
@@ -488,6 +491,7 @@ function CheckoutPage() {
     if (!pix) return;
     try {
       await navigator.clipboard.writeText(pix.pix_code);
+      void track("pix_copied", { order: pix.order_id.slice(0, 8).toUpperCase() });
       toast.success("Código PIX copiado!");
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2500);
