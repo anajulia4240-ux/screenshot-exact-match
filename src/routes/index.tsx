@@ -206,7 +206,7 @@ function Faq() {
     },
   ];
   return (
-    <section className="mx-auto max-w-3xl px-4 py-12">
+    <section id="faq" className="mx-auto max-w-3xl scroll-mt-28 px-4 py-12">
       <h2 className="text-center text-2xl font-extrabold md:text-3xl">Perguntas frequentes</h2>
       <div className="mt-6 divide-y rounded-2xl border bg-card">
         {items.map(({ q, a }) => (
