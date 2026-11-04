@@ -37,6 +37,37 @@ import correiosLogo from "@/assets/correios-logo.png.asset.json";
 import jadlogLogo from "@/assets/jadlog-logo.png.asset.json";
 import { Input } from "@/components/ui/input";
 
+/**
+ * Copia texto para a área de transferência.
+ * Usa a API moderna e, se ela falhar (permissão negada, navegador antigo),
+ * cai para um textarea oculto + execCommand. Retorna true quando copiou de verdade.
+ */
+async function copyText(text: string): Promise<boolean> {
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch {
+    /* segue para o plano B */
+  }
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.top = "-1000px";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand("copy");
+    ta.remove();
+    return ok;
+  } catch {
+    return false;
+  }
+}
+
 export const Route = createFileRoute("/checkout")({
   head: () => ({
     meta: [
@@ -233,6 +264,8 @@ function CheckoutPage() {
   const [shipping, setShipping] = useState<ShippingId>(DEFAULT_SHIPPING);
   const shipOpt = shippingById(shipping);
   const generating = useRef(false);
+  /** Guarda o "copiou o PIX" uma só vez quando a pessoa copia mais de uma vez seguidas. */
+  const lastCopiedRef = useRef(0);
   const contentIds = useRef<string[]>([]);
 
   const lines = Object.entries(cart).flatMap(([slug, qty]) => {
@@ -510,17 +543,25 @@ function CheckoutPage() {
     return () => window.clearInterval(t);
   }, [pix, paid, orderCode]);
 
+  /** Grava que a pessoa copiou o código PIX (botão, Ctrl+C ou toque longo no código). */
+  function markPixCopied() {
+    if (!pix) return;
+    const now = Date.now();
+    if (now - lastCopiedRef.current < 5000) return;
+    lastCopiedRef.current = now;
+    void track("pix_copied", { order_id: pix.order_id, order: pix.order_id.slice(0, 8).toUpperCase() });
+  }
+
   async function copyPix() {
     if (!pix) return;
-    try {
-      await navigator.clipboard.writeText(pix.pix_code);
-      void track("pix_copied", { order: pix.order_id.slice(0, 8).toUpperCase() });
-      toast.success("Código PIX copiado!");
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 2500);
-    } catch {
+    if (!(await copyText(pix.pix_code))) {
       toast.error("Não consegui copiar. Selecione o código e copie manualmente.");
+      return;
     }
+    markPixCopied();
+    toast.success("Código PIX copiado!");
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 2500);
   }
 
   // ---------- Resumo do pedido (lateral no desktop, recolhível no topo no mobile) ----------
@@ -758,7 +799,10 @@ function CheckoutPage() {
               )}
               <div>
                 <p className="mb-1.5 text-xs font-semibold text-muted-foreground">PIX Copia e Cola</p>
-                <div className="max-h-24 overflow-y-auto rounded-xl border bg-muted/50 p-3 text-left font-mono text-[11px] break-all text-muted-foreground">{pix.pix_code}</div>
+                <div
+                  onCopy={() => markPixCopied()}
+                  className="max-h-24 overflow-y-auto rounded-xl border bg-muted/50 p-3 text-left font-mono text-[11px] break-all text-muted-foreground"
+                >{pix.pix_code}</div>
               </div>
               <Button className="h-14 w-full rounded-2xl text-base font-bold uppercase tracking-wide shadow-lg" size="lg" onClick={() => void copyPix()}>
                 {copied ? <Check className="h-5 w-5" /> : <Copy className="h-5 w-5" />}
