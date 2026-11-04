@@ -54,6 +54,7 @@ const carrierOf = (o: Row) => {
   const m = ship && typeof ship === "object" ? (ship as Record<string, unknown>)["method"] : null;
   return m === "jadlog" ? "Jadlog" : "SEDEX";
 };
+const orderCodeOf = (o: Row) => (typeof t(o)["order_code"] === "string" ? (t(o)["order_code"] as string) : "");
 const shortId = (o: Row) => o.id.slice(0, 8).toUpperCase();
 
 function TrackingPage() {
@@ -83,7 +84,7 @@ function TrackingPage() {
   const filtered = rows.filter((o) => {
     if (filter !== "all" && stageOf(o) !== filter) return false;
     if (!s) return true;
-    return `${codeOf(o)} ${o.customer_name ?? ""} ${o.customer_phone ?? ""} ${o.customer_email ?? ""} ${shortId(o)}`
+    return `${codeOf(o)} ${orderCodeOf(o)} ${o.customer_name ?? ""} ${o.customer_phone ?? ""} ${o.customer_email ?? ""} ${shortId(o)}`
       .toLowerCase()
       .includes(s);
   });
@@ -102,7 +103,7 @@ function TrackingPage() {
         <h2 className="text-2xl font-bold">Rastreio</h2>
       </div>
       <p className="mb-4 max-w-3xl text-sm text-muted-foreground">
-        Cole o código dos Correios/Jadlog e escolha a etapa. A cliente vê exatamente isso em{" "}
+        Cada pedido pago ganha na hora um código da loja (BHY…), que a cliente usa em Rastrear pedido. Quando postar, cole aqui o código dos Correios/Jadlog e escolha a etapa. A cliente vê exatamente isso em{" "}
         <b className="text-foreground">Rastrear pedido</b> (pelo CPF ou pelo código).
       </p>
 
@@ -232,6 +233,7 @@ function TrackingRow({ order }: { order: Row }) {
             {copied === shortId(order) ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
           </button>
         </div>
+        {orderCodeOf(order) && <p className="mt-0.5 font-mono text-xs font-semibold text-success">{orderCodeOf(order)}</p>}
         <p className="mt-0.5 max-w-[220px] text-[11px] text-muted-foreground">
           {items.map((i) => `${i.qty ?? 1}x ${i.name ?? "Produto"}`).join(", ")}
         </p>

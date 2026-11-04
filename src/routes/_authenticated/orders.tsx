@@ -65,6 +65,7 @@ const str = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : "");
 const digits = (v: string) => v.replace(/\D/g, "");
 const tr = (o: Order) => obj(o.tracking);
 const codeOf = (o: Order) => str(tr(o)["tracking_code"]);
+const orderCodeOf = (o: Order) => str(tr(o)["order_code"]);
 const cpfOf = (o: Order) => str(obj(tr(o)["customer"])["cpf"]);
 const shortId = (o: Order) => o.id.slice(0, 8).toUpperCase();
 const stageOf = (o: Order): StageId => {
@@ -144,7 +145,7 @@ function OrdersPage() {
     return all.filter((o) => {
       if (status !== "all" && o.status !== status) return false;
       if (!s) return true;
-      const text = `${o.customer_name ?? ""} ${o.customer_email ?? ""} ${codeOf(o)} ${shortId(o)} ${o.coupon_code ?? ""}`.toLowerCase();
+      const text = `${o.customer_name ?? ""} ${o.customer_email ?? ""} ${codeOf(o)} ${orderCodeOf(o)} ${shortId(o)} ${o.coupon_code ?? ""}`.toLowerCase();
       if (text.includes(s)) return true;
       if (sd.length >= 3) {
         if (digits(o.customer_phone ?? "").includes(sd)) return true;
@@ -199,7 +200,7 @@ function OrdersPage() {
 
         <div className="flex flex-col gap-2 sm:flex-row">
           <Input
-            placeholder="Nome, telefone, e-mail, CPF, nº do pedido ou código de rastreio"
+            placeholder="Nome, telefone, e-mail, CPF, nº do pedido ou código (BHY…)"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && applySearch()}
@@ -391,13 +392,19 @@ function OrderRow({ order, open, onToggle }: { order: Order; open: boolean; onTo
             <span className="font-mono font-bold text-primary">#{shortId(order)}</span>
             <CopyBtn on={copied === shortId(order)} onClick={() => void copy(shortId(order))} label="Copiar nº do pedido" />
           </div>
+          {orderCodeOf(order) && (
+            <div className="mt-0.5 flex items-center gap-1 font-mono text-xs font-semibold text-success">
+              {orderCodeOf(order)}
+              <CopyBtn on={copied === orderCodeOf(order)} onClick={() => void copy(orderCodeOf(order))} label="Copiar código de rastreio da loja" />
+            </div>
+          )}
           {code ? (
             <div className="mt-0.5 flex items-center gap-1 font-mono text-xs">
               {code}
               <CopyBtn on={copied === code} onClick={() => void copy(code)} label="Copiar código de rastreio" />
             </div>
           ) : (
-            <p className="mt-0.5 text-[11px] text-muted-foreground">sem código</p>
+            <p className="mt-0.5 text-[11px] text-muted-foreground">{isPaid ? "sem código Correios/Jadlog" : "—"}</p>
           )}
         </td>
         <td className="px-3 py-3">
