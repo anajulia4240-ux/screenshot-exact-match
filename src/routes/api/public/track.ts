@@ -102,6 +102,14 @@ export const Route = createFileRoute("/api/public/track")({
               .from("visitor_ips")
               .insert({ ip, first_page: b.page ?? null, last_page: b.page ?? null });
         }
+        // Recuperação por e-mail "de carona" nas visitas (no máximo a cada 5 min; nunca trava a resposta por mais de 4s).
+        if (b.type === "page_view") {
+          const { withTimeout } = await import("@/lib/payments.server");
+          await withTimeout(
+            import("@/lib/recovery.server").then((m) => m.runRecovery({ throttle: true })).catch(() => null),
+            4000,
+          );
+        }
         return Response.json({ session_id: sessionId });
       },
     },
