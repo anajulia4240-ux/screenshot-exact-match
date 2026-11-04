@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { findProduct } from "@/lib/catalog";
+import { IDENTIFICATION_COUPON } from "@/lib/coupon-defaults";
 import { clearCart, setQty, useCart } from "@/lib/cart";
 import { brl } from "@/lib/store";
 import { isValidCpf, isValidPhone, maskCep, maskCpf, maskPhone, onlyDigits } from "@/lib/br";
@@ -219,6 +220,8 @@ function CheckoutPage() {
   const [coupon, setCoupon] = useState<{ code: string; percent: number } | null>(null);
   const [pix, setPix] = useState<Pix | null>(null);
   const [paid, setPaid] = useState(false);
+  const [orderCode, setOrderCode] = useState<string | null>(null);
+  const [codeCopied, setCodeCopied] = useState(false);
   const [copied, setCopied] = useState(false);
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [shipping, setShipping] = useState<ShippingId>("sedex");
@@ -267,48 +270,55 @@ function CheckoutPage() {
     setSaved(null);
   }
 
-  // ---------- Etapa 1: identificação ----------
+  // ---------- Lead (nome + WhatsApp na etapa 1; e-mail completa no pagamento) ----------
+  async function saveLead(withEmail: boolean) {
+    let leadId: string | null = null;
+    try {
+      leadId = localStorage.getItem(LEAD_KEY);
+    } catch {
+      /* ignorado */
+    }
+    const res = await fetch("/api/public/lead", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        lead_id: leadId,
+        session_id: getSessionId(),
+        name: customer.name.trim(),
+        phone: onlyDigits(customer.phone),
+        ...(withEmail && customer.email.trim() ? { email: customer.email.trim() } : {}),
+        utm: pickUtm(getTracking()),
+      }),
+    });
+    const j = (await res.json().catch(() => ({}))) as { lead_id?: string };
+    if (j.lead_id)
+      try {
+        localStorage.setItem(LEAD_KEY, j.lead_id);
+      } catch {
+        /* ignorado */
+      }
+  }
+
+  // ---------- Etapa 1: identificação (só nome + WhatsApp) ----------
   async function submitIdentity(e: React.FormEvent) {
     e.preventDefault();
     if (customer.name.trim().split(/\s+/).length < 2)
       return void toast.error("Informe nome e sobrenome.");
     if (!isValidPhone(customer.phone))
       return void toast.error("WhatsApp inválido. Use DDD + número.");
-    if (!/^\S+@\S+\.\S+$/.test(customer.email)) return void toast.error("E-mail inválido.");
-    if (!isValidCpf(customer.cpf)) return void toast.error("CPF inválido.");
     setBusy(true);
     try {
-      let leadId: string | null = null;
-      try {
-        leadId = localStorage.getItem(LEAD_KEY);
-      } catch {
-        /* ignorado */
-      }
-      const res = await fetch("/api/public/lead", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          lead_id: leadId,
-          session_id: getSessionId(),
-          name: customer.name.trim(),
-          phone: onlyDigits(customer.phone),
-          email: customer.email.trim(),
-          utm: pickUtm(getTracking()),
-        }),
-      });
-      const j = (await res.json().catch(() => ({}))) as { lead_id?: string };
-      if (j.lead_id)
-        try {
-          localStorage.setItem(LEAD_KEY, j.lead_id);
-        } catch {
-          /* ignorado */
-        }
+      await saveLead(false);
     } catch {
       /* lead é best-effort: não trava a compra */
     }
     save(customer, address);
     fbqIdentify(customer);
     setBusy(false);
+    if (!coupon)
+      toast.success(`Presente liberado: 10% OFF com o cupom ${IDENTIFICATION_COUPON.code}!`, {
+        description: "Toque no cupom na etapa de pagamento para aplicar.",
+      });
     goto(1);
   }
 
@@ -353,9 +363,10 @@ function CheckoutPage() {
   }
 
   // ---------- Etapa 3: pagamento ----------
-  async function applyCoupon() {
-    const code = couponInput.trim();
+  async function applyCoupon(selected?: string) {
+    const code = (selected ?? couponInput).trim().toUpperCase();
     if (!code) return;
+    if (selected) setCouponInput(code);
     const r = await fetch(
       `/api/public/coupon?code=${encodeURIComponent(code)}&subtotal=${subtotal}`,
     );
@@ -366,6 +377,7 @@ function CheckoutPage() {
     };
     if (j.valid && j.code && j.percent) {
       setCoupon({ code: j.code, percent: j.percent });
+      void track("coupon_applied", { code: j.code, percent: j.percent });
       toast.success(`Cupom ${j.code} aplicado: -${j.percent}%`);
     } else {
       setCoupon(null);
@@ -375,6 +387,17 @@ function CheckoutPage() {
 
   async function generatePix() {
     if (generating.current) return; // bloqueia duplo clique
+    if (!/^\S+@\S+\.\S+$/.test(customer.email.trim())) {
+      document.getElementById("pix-email")?.focus();
+      return void toast.error("Informe um e-mail válido para receber a confirmação.");
+    }
+    if (!isValidCpf(customer.cpf)) {
+      document.getElementById("pix-cpf")?.focus();
+      return void toast.error("CPF inválido. Ele é obrigatório para gerar o PIX.");
+    }
+    save(customer, address);
+    fbqIdentify(customer);
+    void saveLead(true).catch(() => {});
     generating.current = true;
     setBusy(true);
     contentIds.current = lines.map((l) => l.p.slug);
@@ -433,13 +456,17 @@ function CheckoutPage() {
   }
 
   // Polling do status a cada 5s (pelo nosso servidor, nunca direto na Fruitfy).
+  // Depois de pago, continua consultando só até receber o código de rastreio.
   useEffect(() => {
-    if (!pix || paid) return;
+    if (!pix || (paid && orderCode)) return;
+    let tries = 0;
     const t = window.setInterval(async () => {
+      if (paid && ++tries > 24) return window.clearInterval(t);
       try {
         const r = await fetch(`/api/public/pix-status?id=${pix.order_id}`);
-        const j = (await r.json()) as { status?: string };
-        if (j.status === "paid") {
+        const j = (await r.json()) as { status?: string; order_code?: string | null };
+        if (j.order_code) setOrderCode(j.order_code);
+        if (j.status === "paid" && !paid) {
           purchaseOnce(pix.order_id, () =>
             fbqTrack(
               "Purchase",
@@ -453,9 +480,9 @@ function CheckoutPage() {
       } catch {
         /* tenta de novo */
       }
-    }, 5000);
+    }, paid ? 2500 : 5000);
     return () => window.clearInterval(t);
-  }, [pix, paid]);
+  }, [pix, paid, orderCode]);
 
   async function copyPix() {
     if (!pix) return;
@@ -593,19 +620,87 @@ function CheckoutPage() {
   const body = (() => {
     if (paid && pix) {
       return (
-        <div className="mx-auto max-w-md rounded-3xl border bg-card p-8 text-center shadow-lg">
-          <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-success/10">
-            <CheckCircle2 className="h-9 w-9 text-success" />
-          </span>
-          <h1 className="mt-4 text-2xl font-bold">Pagamento confirmado!</h1>
-          <p className="mt-2 text-muted-foreground">
-            Obrigada, {customer.name.split(" ")[0]}! Recebemos {brl(pix.total_cents)}. Você vai
-            receber as atualizações do pedido no WhatsApp.
-          </p>
-          <p className="mt-3 text-xs text-muted-foreground">
-            Pedido <span className="font-mono font-semibold text-foreground">#{pix.order_id.slice(0, 8).toUpperCase()}</span>
-          </p>
-          <Button asChild size="lg" className="mt-6 h-12 w-full rounded-2xl font-semibold">
+        <div className="mx-auto max-w-md space-y-4">
+          <div className="overflow-hidden rounded-3xl border bg-card text-center shadow-lg">
+            <div className="bg-success/10 px-6 pb-5 pt-7">
+              <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-success text-success-foreground shadow-lg shadow-success/30">
+                <CheckCircle2 className="h-9 w-9" />
+              </span>
+              <h1 className="mt-4 text-2xl font-extrabold">Pagamento confirmado!</h1>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Obrigada, {customer.name.split(" ")[0]}! Recebemos {brl(pix.total_cents)}.
+              </p>
+            </div>
+
+            <div className="space-y-3 p-5">
+              {orderCode ? (
+                <>
+                  <p className="text-sm font-semibold">🎉 Acabamos de gerar seu código de rastreio:</p>
+                  <div className="rounded-2xl border-2 border-dashed border-primary/40 bg-primary/5 px-4 py-3 font-mono text-xl font-extrabold tracking-wider text-primary">
+                    {orderCode}
+                  </div>
+                  <Button
+                    variant="outline"
+                    className="h-11 w-full rounded-xl font-semibold"
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(orderCode);
+                        setCodeCopied(true);
+                        window.setTimeout(() => setCodeCopied(false), 2000);
+                      } catch {
+                        toast.error("Não consegui copiar. Anote o código.");
+                      }
+                    }}
+                  >
+                    {codeCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    {codeCopied ? "Código copiado!" : "Copiar código"}
+                  </Button>
+                  <Button asChild size="lg" className="h-12 w-full rounded-xl text-base font-bold">
+                    <Link to="/rastreio" search={{ code: orderCode }}>
+                      <Truck className="h-5 w-5" /> Rastrear meu pedido
+                    </Link>
+                  </Button>
+                </>
+              ) : (
+                <p className="flex items-center justify-center gap-2 rounded-2xl bg-muted/60 p-4 text-sm font-semibold">
+                  <Loader2 className="h-4 w-4 animate-spin" /> Gerando seu código de rastreio…
+                </p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Pedido <span className="font-mono font-semibold text-foreground">#{pix.order_id.slice(0, 8).toUpperCase()}</span>
+                {" • "}você também pode rastrear pelo CPF
+              </p>
+            </div>
+          </div>
+
+          <ol className="space-y-3 rounded-3xl border bg-card p-5 text-sm shadow-sm">
+            <li className="font-bold">Próximos passos</li>
+            {[
+              { done: true, title: "Pagamento aprovado", text: "Seu pedido foi confirmado." },
+              { done: true, title: "Código de rastreio gerado", text: "Acompanhe tudo pela página Rastrear pedido." },
+              { done: false, title: "Envio imediato", text: "Seu pedido entra agora na fila de postagem. Avisamos pelo WhatsApp." },
+              { done: false, title: "Entrega com frete grátis", text: arrivalLabel(shipOpt) },
+            ].map((s) => (
+              <li key={s.title} className="flex gap-3">
+                <span
+                  className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${
+                    s.done ? "bg-success text-success-foreground" : "bg-primary/10 text-primary"
+                  }`}
+                >
+                  {s.done ? <Check className="h-3.5 w-3.5" strokeWidth={3} /> : <Truck className="h-3.5 w-3.5" />}
+                </span>
+                <span>
+                  <span className="block font-semibold">{s.title}</span>
+                  <span className="block text-xs text-muted-foreground">{s.text}</span>
+                </span>
+              </li>
+            ))}
+            <li className="flex items-center gap-2 rounded-xl bg-success/10 p-3 text-xs font-semibold text-success">
+              <ShieldCheck className="h-4 w-4 shrink-0" /> Garantia de 30 dias: se não gostar, devolvemos seu dinheiro.
+            </li>
+          </ol>
+
+          <Button asChild variant="ghost" className="w-full text-muted-foreground">
             <Link to="/">Voltar à loja</Link>
           </Button>
         </div>
@@ -649,7 +744,7 @@ function CheckoutPage() {
             {[
               `Abra o app do seu banco e escolha PIX Copia e Cola${pix.qr_image ? " ou leia o QR Code" : ""}.`,
               "Cole o código e confirme o pagamento.",
-              "Pronto! Esta tela atualiza sozinha quando o pagamento for confirmado.",
+              "Pronto! Esta tela atualiza sozinha e seu código de rastreio é gerado na hora.",
             ].map((t, i) => (
               <li key={t} className="flex gap-3">
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">{i + 1}</span>
@@ -657,6 +752,8 @@ function CheckoutPage() {
               </li>
             ))}
           </ol>
+          <Guarantees />
+
         </div>
       );
     }
@@ -700,20 +797,26 @@ function CheckoutPage() {
           <Section
             n={1}
             title="Identificação"
-            subtitle="Usaremos seus dados para entrega e atualizações do pedido."
+            subtitle="Só nome e WhatsApp — e você ganha 10% OFF."
             icon={User}
             active={step === 0}
             done={step > 0}
             onEdit={() => goto(0)}
             summary={
-              <>
-                <p className="truncate"><span className="font-semibold text-foreground">{customer.name}</span> • {customer.email}</p>
-                <p className="truncate">{maskPhone(customer.phone)} • CPF {maskCpf(customer.cpf)}</p>
-              </>
+              <p className="truncate">
+                <span className="font-semibold text-foreground">{customer.name}</span> • {maskPhone(customer.phone)}
+              </p>
             }
           >
-            <form onSubmit={submitIdentity} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field label="Nome completo" className="sm:col-span-2">
+            <form onSubmit={submitIdentity} className="grid grid-cols-1 gap-4">
+              <div className="flex items-center gap-3 rounded-xl border border-dashed border-success/50 bg-success/10 px-3.5 py-3">
+                <span className="text-2xl" aria-hidden>🎁</span>
+                <p className="text-[13px] leading-snug">
+                  <b className="text-success">Ganhe 10% OFF agora.</b> Informe seu nome e WhatsApp para liberar o cupom{" "}
+                  <b>{IDENTIFICATION_COUPON.code}</b>.
+                </p>
+              </div>
+              <Field label="Nome completo">
                 <Input
                   required
                   autoComplete="name"
@@ -724,19 +827,7 @@ function CheckoutPage() {
                   onChange={(e) => setCustomer({ ...customer, name: e.target.value })}
                 />
               </Field>
-              <Field label="E-mail" hint="Você recebe a confirmação do pedido aqui." className="sm:col-span-2">
-                <Input
-                  required
-                  type="email"
-                  autoComplete="email"
-                  placeholder="seu@email.com"
-                  aria-label="E-mail"
-                  className={FIELD}
-                  value={customer.email}
-                  onChange={(e) => setCustomer({ ...customer, email: e.target.value })}
-                />
-              </Field>
-              <Field label="WhatsApp" hint="Para acompanhar a entrega.">
+              <Field label="WhatsApp" hint="Para enviar o rastreio e acompanhar a entrega.">
                 <Input
                   required
                   inputMode="tel"
@@ -748,20 +839,9 @@ function CheckoutPage() {
                   onChange={(e) => setCustomer({ ...customer, phone: onlyDigits(e.target.value) })}
                 />
               </Field>
-              <Field label="CPF" hint="Obrigatório para pagamento via PIX.">
-                <Input
-                  required
-                  inputMode="numeric"
-                  placeholder="000.000.000-00"
-                  aria-label="CPF"
-                  className={FIELD}
-                  value={maskCpf(customer.cpf)}
-                  onChange={(e) => setCustomer({ ...customer, cpf: onlyDigits(e.target.value) })}
-                />
-              </Field>
-              <div className="sm:col-span-2">
+              <div>
                 <Button type="submit" size="lg" className="h-12 w-full rounded-xl text-base font-bold" disabled={busy}>
-                  {busy && <Loader2 className="h-4 w-4 animate-spin" />}Continuar para entrega
+                  {busy && <Loader2 className="h-4 w-4 animate-spin" />}Liberar 10% OFF e continuar
                   {!busy && <ArrowRight className="h-4 w-4" />}
                 </Button>
                 <p className="mt-2.5 flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
@@ -960,6 +1040,56 @@ function CheckoutPage() {
                 <span className="text-right text-sm font-extrabold text-primary">{brl(total)}</span>
               </div>
 
+              {/* Dados para emissão do PIX */}
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <Field label="E-mail" hint="Você recebe a confirmação e o rastreio aqui.">
+                  <Input
+                    id="pix-email"
+                    type="email"
+                    autoComplete="email"
+                    placeholder="seu@email.com"
+                    aria-label="E-mail"
+                    className={FIELD}
+                    value={customer.email}
+                    onChange={(e) => setCustomer({ ...customer, email: e.target.value })}
+                  />
+                </Field>
+                <Field label="CPF" hint="Obrigatório para emitir o PIX.">
+                  <Input
+                    id="pix-cpf"
+                    inputMode="numeric"
+                    placeholder="000.000.000-00"
+                    aria-label="CPF"
+                    className={FIELD}
+                    value={maskCpf(customer.cpf)}
+                    onChange={(e) => setCustomer({ ...customer, cpf: onlyDigits(e.target.value) })}
+                  />
+                </Field>
+              </div>
+
+              {/* Cupom de identificação: toque para aplicar */}
+              {!coupon && (
+                <button
+                  type="button"
+                  onClick={() => void applyCoupon(IDENTIFICATION_COUPON.code)}
+                  className="flex w-full items-center gap-3 rounded-xl border-2 border-dashed border-success/60 bg-success/10 p-3.5 text-left transition hover:bg-success/15 active:scale-[0.99]"
+                >
+                  <span className="text-2xl" aria-hidden>🎁</span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-bold text-success">
+                      Seu presente: {IDENTIFICATION_COUPON.percent}% OFF liberado!
+                    </span>
+                    <span className="block text-xs text-muted-foreground">
+                      Toque para aplicar o cupom <b className="font-mono text-foreground">{IDENTIFICATION_COUPON.code}</b> e pagar{" "}
+                      <b className="text-foreground">{brl(subtotal - Math.round((subtotal * IDENTIFICATION_COUPON.percent) / 100))}</b>
+                    </span>
+                  </span>
+                  <span className="shrink-0 rounded-lg bg-success px-3 py-2 text-xs font-bold uppercase text-success-foreground">
+                    Aplicar
+                  </span>
+                </button>
+              )}
+
               {/* Cupom */}
               {coupon ? (
                 <p className="flex items-center justify-between gap-2 rounded-xl bg-success/10 px-3.5 py-2.5 text-xs font-semibold text-success">
@@ -1004,7 +1134,7 @@ function CheckoutPage() {
                   onClick={() => setCouponOpen(true)}
                   className="flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
                 >
-                  <Tag className="h-4 w-4" /> Tem um cupom de desconto?
+                  <Tag className="h-4 w-4" /> Tem outro cupom?
                 </button>
               )}
 
@@ -1031,6 +1161,8 @@ function CheckoutPage() {
               <p className="flex items-center justify-center gap-1.5 text-center text-[11px] text-muted-foreground">
                 <ShieldCheck className="h-3.5 w-3.5 text-success" /> O código PIX aparece na próxima tela. Pagamento 100% seguro.
               </p>
+              <Guarantees />
+
               <Button type="button" variant="ghost" className="w-full text-muted-foreground" onClick={() => goto(1)}>
                 <ArrowLeft className="h-4 w-4" /> Voltar para entrega
               </Button>
@@ -1086,6 +1218,30 @@ function CheckoutHeader() {
         </span>
       </div>
     </header>
+  );
+}
+
+/** Garantias da compra: envio imediato, rastreio na hora e 30 dias de garantia. */
+function Guarantees() {
+  const items = [
+    { Icon: Zap, title: "Envio imediato", text: "Postamos logo após a aprovação do PIX." },
+    { Icon: Truck, title: "Rastreio na hora", text: "Seu código de rastreio é gerado assim que o pagamento é aprovado." },
+    { Icon: ShieldCheck, title: "Garantia de 30 dias", text: "Não gostou? Devolvemos seu dinheiro." },
+  ];
+  return (
+    <ul className="grid grid-cols-1 gap-2 rounded-2xl border bg-card p-3 sm:grid-cols-3">
+      {items.map(({ Icon, title, text }) => (
+        <li key={title} className="flex items-start gap-2.5 rounded-xl p-1.5 sm:flex-col sm:items-center sm:text-center">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-success/10 text-success">
+            <Icon className="h-4 w-4" />
+          </span>
+          <span>
+            <span className="block text-[13px] font-bold leading-tight">{title}</span>
+            <span className="block text-[11px] leading-snug text-muted-foreground">{text}</span>
+          </span>
+        </li>
+      ))}
+    </ul>
   );
 }
 
