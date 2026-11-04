@@ -22,6 +22,13 @@
       "when": 1793294558483,
       "tag": "0002_god_mode_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793803910165,
+      "tag": "0003_migration",
+      "breakpoints": true
     }
   ]
 }

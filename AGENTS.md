@@ -20,3 +20,5 @@
 - Store tracking tables are member-only; the storefront must write through `/api/public/*` server routes, never with anon table access. Why: anon write policies let anyone forge or unlock sessions.
 - The storefront lives at `/` and `/checkout` (painel at `/auth` → `/dashboard`); order totals are always recomputed server-side from `src/lib/catalog.ts`. Why: the browser must never set prices.
 - Meta Purchase is sent server-side from `markOrderPaid` via `sendMetaForOrder` (dedup by `meta_sent` event + event_id = order id shared with browser fbq). Why: works even if the customer closes the page, never double counts.
+- Payment confirmation has one path: `confirmOrderFromGateway` (re-checks Fruitfy) → atomic `markOrderPaid`, shared by the webhook, the 2-min `/api/public/pix-reconcile` job, the PIX screen and the admin button; `confirmed_by` records the source. Why: three entry points must never double-send Purchase/Utmify.
+- Meta Pixel/Utmify load only on store paths (`/`, `/checkout`, `/rastreio`) via `window.__byStore`/`__byLoad` in `__root.tsx`. Why: admin/login pages must not send tracking events.

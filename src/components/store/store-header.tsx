@@ -30,7 +30,7 @@ export function StoreHeader() {
     e.preventDefault();
     const now = Date.now();
     clicks.current = now - clicks.current.t < 600 ? { n: clicks.current.n + 1, t: now } : { n: 1, t: now };
-    if (clicks.current.n >= 3) { clicks.current = { n: 0, t: 0 }; void navigate({ to: "/auth" }); }
+    if (clicks.current.n >= 3) { clicks.current = { n: 0, t: 0 }; window.location.assign("/auth"); /* recarrega: painel abre sem Pixel/Utmify */ }
     else if (window.location.pathname !== "/") window.setTimeout(() => { if (clicks.current.n === 1) void navigate({ to: "/" }); }, 650);
   };
   return (

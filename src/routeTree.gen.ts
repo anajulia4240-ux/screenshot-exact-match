@@ -32,6 +32,7 @@ import { Route as ApiPublicLeadRouteImport } from './routes/api/public/lead'
 import { Route as ApiPublicOrdersRouteImport } from './routes/api/public/orders'
 import { Route as ApiPublicPaymentWebhookRouteImport } from './routes/api/public/payment-webhook'
 import { Route as ApiPublicPixRouteImport } from './routes/api/public/pix'
+import { Route as ApiPublicPixReconcileRouteImport } from './routes/api/public/pix-reconcile'
 import { Route as ApiPublicPixStatusRouteImport } from './routes/api/public/pix-status'
 import { Route as ApiPublicRastreioRouteImport } from './routes/api/public/rastreio'
 import { Route as ApiPublicRecoveryRunRouteImport } from './routes/api/public/recovery-run'
@@ -151,6 +152,11 @@ const ApiPublicPixRoute = ApiPublicPixRouteImport.update({
   path: '/api/public/pix',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicPixReconcileRoute = ApiPublicPixReconcileRouteImport.update({
+  id: '/api/public/pix-reconcile',
+  path: '/api/public/pix-reconcile',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicPixStatusRoute = ApiPublicPixStatusRouteImport.update({
   id: '/api/public/pix-status',
   path: '/api/public/pix-status',
@@ -195,6 +201,7 @@ export interface FileRoutesByFullPath {
   '/api/public/orders': typeof ApiPublicOrdersRoute
   '/api/public/payment-webhook': typeof ApiPublicPaymentWebhookRoute
   '/api/public/pix': typeof ApiPublicPixRoute
+  '/api/public/pix-reconcile': typeof ApiPublicPixReconcileRoute
   '/api/public/pix-status': typeof ApiPublicPixStatusRoute
   '/api/public/rastreio': typeof ApiPublicRastreioRoute
   '/api/public/recovery-run': typeof ApiPublicRecoveryRunRoute
@@ -223,6 +230,7 @@ export interface FileRoutesByTo {
   '/api/public/orders': typeof ApiPublicOrdersRoute
   '/api/public/payment-webhook': typeof ApiPublicPaymentWebhookRoute
   '/api/public/pix': typeof ApiPublicPixRoute
+  '/api/public/pix-reconcile': typeof ApiPublicPixReconcileRoute
   '/api/public/pix-status': typeof ApiPublicPixStatusRoute
   '/api/public/rastreio': typeof ApiPublicRastreioRoute
   '/api/public/recovery-run': typeof ApiPublicRecoveryRunRoute
@@ -253,6 +261,7 @@ export interface FileRoutesById {
   '/api/public/orders': typeof ApiPublicOrdersRoute
   '/api/public/payment-webhook': typeof ApiPublicPaymentWebhookRoute
   '/api/public/pix': typeof ApiPublicPixRoute
+  '/api/public/pix-reconcile': typeof ApiPublicPixReconcileRoute
   '/api/public/pix-status': typeof ApiPublicPixStatusRoute
   '/api/public/rastreio': typeof ApiPublicRastreioRoute
   '/api/public/recovery-run': typeof ApiPublicRecoveryRunRoute
@@ -283,6 +292,7 @@ export interface FileRouteTypes {
     | '/api/public/orders'
     | '/api/public/payment-webhook'
     | '/api/public/pix'
+    | '/api/public/pix-reconcile'
     | '/api/public/pix-status'
     | '/api/public/rastreio'
     | '/api/public/recovery-run'
@@ -311,6 +321,7 @@ export interface FileRouteTypes {
     | '/api/public/orders'
     | '/api/public/payment-webhook'
     | '/api/public/pix'
+    | '/api/public/pix-reconcile'
     | '/api/public/pix-status'
     | '/api/public/rastreio'
     | '/api/public/recovery-run'
@@ -340,6 +351,7 @@ export interface FileRouteTypes {
     | '/api/public/orders'
     | '/api/public/payment-webhook'
     | '/api/public/pix'
+    | '/api/public/pix-reconcile'
     | '/api/public/pix-status'
     | '/api/public/rastreio'
     | '/api/public/recovery-run'
@@ -358,6 +370,7 @@ export interface RootRouteChildren {
   ApiPublicOrdersRoute: typeof ApiPublicOrdersRoute
   ApiPublicPaymentWebhookRoute: typeof ApiPublicPaymentWebhookRoute
   ApiPublicPixRoute: typeof ApiPublicPixRoute
+  ApiPublicPixReconcileRoute: typeof ApiPublicPixReconcileRoute
   ApiPublicPixStatusRoute: typeof ApiPublicPixStatusRoute
   ApiPublicRastreioRoute: typeof ApiPublicRastreioRoute
   ApiPublicRecoveryRunRoute: typeof ApiPublicRecoveryRunRoute
@@ -527,6 +540,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPixRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/pix-reconcile': {
+      id: '/api/public/pix-reconcile'
+      path: '/api/public/pix-reconcile'
+      fullPath: '/api/public/pix-reconcile'
+      preLoaderRoute: typeof ApiPublicPixReconcileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/pix-status': {
       id: '/api/public/pix-status'
       path: '/api/public/pix-status'
@@ -603,6 +623,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicOrdersRoute: ApiPublicOrdersRoute,
   ApiPublicPaymentWebhookRoute: ApiPublicPaymentWebhookRoute,
   ApiPublicPixRoute: ApiPublicPixRoute,
+  ApiPublicPixReconcileRoute: ApiPublicPixReconcileRoute,
   ApiPublicPixStatusRoute: ApiPublicPixStatusRoute,
   ApiPublicRastreioRoute: ApiPublicRastreioRoute,
   ApiPublicRecoveryRunRoute: ApiPublicRecoveryRunRoute,

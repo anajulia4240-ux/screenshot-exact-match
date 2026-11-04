@@ -83,10 +83,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
     scripts: [
       {
-        children: `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');var _am={};try{var _r=localStorage.getItem('byhappy_fb_am');if(_r){var _p=JSON.parse(_r);if(_p&&typeof _p==='object')_am=_p;}}catch(e){}if(!_am.country)_am.country='br';fbq('init','${META_PIXEL_ID}',_am,{agent:'lovable'});fbq('track','PageView');`,
-      },
-      {
-        children: `try{window.pixelId="${UTMIFY_PIXEL_ID}";var a=document.createElement("script");a.setAttribute("async","");a.setAttribute("defer","");a.setAttribute("src","https://cdn.utmify.com.br/scripts/pixel/pixel.js");document.head.appendChild(a);}catch(e){}`,
+        // Pixel da Meta + Utmify: só nas páginas da loja (nunca no painel/login).
+        // window.__byLoad também é chamado ao navegar do painel para a loja sem recarregar.
+        children: `window.__byStore=function(p){return p==='/'||p.indexOf('/checkout')===0||p.indexOf('/rastreio')===0};window.__byLoad=function(){if(window.fbq)return false;!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq.disablePushState=true;var _am={};try{var _r=localStorage.getItem('byhappy_fb_am');if(_r){var _p=JSON.parse(_r);if(_p&&typeof _p==='object')_am=_p;}}catch(e){}if(!_am.country)_am.country='br';fbq('init','${META_PIXEL_ID}',_am,{agent:'lovable'});fbq('track','PageView');try{window.pixelId="${UTMIFY_PIXEL_ID}";var a=document.createElement("script");a.setAttribute("async","");a.setAttribute("defer","");a.setAttribute("src","https://cdn.utmify.com.br/scripts/pixel/pixel.js");document.head.appendChild(a);}catch(e){}return true};if(window.__byStore(location.pathname))window.__byLoad();`,
       },
     ],
     links: [
@@ -140,9 +139,10 @@ function RootComponent() {
 
   // Script de UTMs da Utmify (só após hidratação) + PageView nas trocas de rota (SPA).
   useEffect(() => {
-    captureTestEventCode();
-    try {
-      if (!document.getElementById("utmify-utms")) {
+    const w = window as unknown as { __byStore?: (p: string) => boolean; __byLoad?: () => boolean };
+    const isStore = (p: string) => w.__byStore?.(p) ?? false;
+    const loadUtms = () => {
+      if (document.getElementById("utmify-utms")) return;
         const sc = document.createElement("script");
         sc.id = "utmify-utms";
         sc.src = "https://cdn.utmify.com.br/scripts/utms/latest.js";
@@ -151,15 +151,24 @@ function RootComponent() {
         sc.setAttribute("data-utmify-prevent-xcod-sck", "");
         sc.setAttribute("data-utmify-prevent-subids", "");
         document.head.appendChild(sc);
+    };
+    const enterStore = () => {
+      try {
+        captureTestEventCode();
+        loadUtms();
+        // true = Pixel acabou de carregar e já enviou o PageView desta página.
+        return w.__byLoad?.() ?? false;
+      } catch {
+        return false; /* nunca quebra a página */
       }
-    } catch {
-      /* nunca quebra a página */
-    }
+    };
+    if (isStore(window.location.pathname)) enterStore();
     let last = window.location.pathname;
     return router.subscribe("onResolved", ({ toLocation }) => {
       if (toLocation.pathname === last) return;
       last = toLocation.pathname;
-      fbqTrack("PageView");
+      if (!isStore(toLocation.pathname)) return; // painel/login: nenhum evento
+      if (!enterStore()) fbqTrack("PageView");
     });
   }, [router]);
 

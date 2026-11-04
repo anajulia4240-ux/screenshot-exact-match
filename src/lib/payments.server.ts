@@ -374,17 +374,20 @@ export const withTimeout = <T>(p: Promise<T>, ms: number): Promise<T | undefined
 const ORDER_COLS =
   "id, lead_id, customer_name, customer_phone, customer_email, total_cents, items, tracking, created_at, paid_at, status";
 
-/** Marca pedido como pago (idempotente) e avisa a Utmify com o valor salvo no pedido. */
-export async function markOrderPaid(
-  orderId: string,
-  by: "gateway" | "manual" = "gateway",
-): Promise<boolean> {
+/** De onde veio a confirmação do pagamento (mostrado na aba Pedidos). */
+export type ConfirmSource = "webhook" | "reconcile" | "pix_screen" | "manual";
+
+/**
+ * Marca pedido como pago com atualização atômica (só se ainda não estava pago/estornado)
+ * e avisa Utmify + Meta com o valor salvo no pedido. Retorna false se já estava pago.
+ */
+export async function markOrderPaid(orderId: string, by: ConfirmSource = "pix_screen"): Promise<boolean> {
   const now = new Date().toISOString();
   const { data: updated } = await db
     .from("orders")
     .update({ status: "paid", paid_at: now, confirmed_by: by })
     .eq("id", orderId)
-    .eq("status", "pending")
+    .not("status", "in", "(paid,refunded)")
     .select(ORDER_COLS)
     .maybeSingle();
   if (!updated) return false; // já estava pago (ou não existe): não reprocessa
@@ -403,8 +406,63 @@ export async function markOrderPaid(
       value_cents: updated.total_cents,
       data: { order_id: orderId, by },
     });
+  if (by === "reconcile") {
+    // Sinal de que o webhook falhou para este pedido.
+    await db.from("events").insert({
+      type: "pix_paid_by_reconcile",
+      value_cents: updated.total_cents,
+      data: { order_id: orderId },
+    });
+  }
   await Promise.all([notifyUtmify(updated, "paid"), sendMetaForOrder(orderId, updated)]);
   return true;
+}
+
+/**
+ * Fluxo único de confirmação (webhook, conferência automática, tela do PIX e botão do painel):
+ * consulta o status real na Fruitfy e, se pago, chama markOrderPaid (atômico).
+ */
+export async function confirmOrderFromGateway(
+  order: { id: string; status: string; tracking: Json },
+  by: ConfirmSource,
+): Promise<{ paid: boolean; changed: boolean; remoteStatus: string | null }> {
+  if (order.status === "paid") return { paid: true, changed: false, remoteStatus: "paid" };
+  const tx = transactionIdOf(order.tracking);
+  if (!tx) return { paid: false, changed: false, remoteStatus: null };
+  const remote = await getFruitfyOrder(tx);
+  if (!isPaidStatus(remote.status, remote.paid_at)) return { paid: false, changed: false, remoteStatus: remote.status };
+  const changed = await markOrderPaid(order.id, by);
+  return { paid: true, changed, remoteStatus: remote.status };
+}
+
+export function transactionIdOf(tracking: Json): string | null {
+  const pay = asRecord(asRecord(tracking)["payment"]);
+  return str(pay["transaction_id"]);
+}
+
+export async function findOrderById(id: string) {
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
+  return loadOrder(id);
+}
+
+/** Pedidos pendentes das últimas 24h (mais antigo primeiro) para a conferência automática. */
+export async function listPendingOrders(limit = 30) {
+  const since = new Date(Date.now() - 24 * 3600_000).toISOString();
+  const { data } = await db
+    .from("orders")
+    .select(ORDER_COLS)
+    .eq("status", "pending")
+    .gte("created_at", since)
+    .order("created_at", { ascending: true })
+    .limit(limit);
+  return data ?? [];
+}
+
+/** Registro de cada aviso recebido; se falhar com o payload, grava versão enxuta. */
+export async function logWebhookEvent(type: string, data: Record<string, unknown>, raw: unknown, orderId?: string) {
+  const base = { type, page: "/webhook/payment", data: { ...data, order_id: orderId ?? null } };
+  const { error } = await db.from("events").insert({ ...base, data: { ...base.data, payload: raw as Json } });
+  if (error) await db.from("events").insert(base as never).then(() => null, () => null);
 }
 
 /** Purchase na Meta CAPI (idempotente por meta_sent). Falha nunca trava o PIX. */
