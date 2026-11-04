@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Play } from "lucide-react";
+import { track } from "@/lib/track";
 import v1 from "@/assets/video-1.mp4.asset.json";
 import v2 from "@/assets/video-2.mp4.asset.json";
 import v3 from "@/assets/video-3.mp4.asset.json";
@@ -11,10 +12,11 @@ const VIDEOS = [v1, v2, v3, v4];
  * Vídeos verticais: só carregam quando chegam perto da tela (mais leve no 4G),
  * mostram o primeiro quadro como capa e um botão de play. Ao tocar, abrem com som e controles.
  */
-function VideoCard({ url }: { url: string }) {
+function VideoCard({ url, n }: { url: string; n: number }) {
   const ref = useRef<HTMLVideoElement>(null);
   const [visible, setVisible] = useState(false);
   const [playing, setPlaying] = useState(false);
+  const counted = useRef(false);
 
   useEffect(() => {
     const el = ref.current;
@@ -48,6 +50,11 @@ function VideoCard({ url }: { url: string }) {
         className="h-full w-full object-cover"
         onPlay={(e) => {
           setPlaying(true);
+          // Aba Eventos: registra o 1º play de cada vídeo.
+          if (!counted.current) {
+            counted.current = true;
+            void track("video_play", { label: `Vídeo ${n}` });
+          }
           // Pausa os outros vídeos para o áudio não sobrepor.
           document.querySelectorAll("video").forEach((el) => {
             if (el !== e.currentTarget) el.pause();
@@ -77,8 +84,8 @@ export function VideoSection() {
     <section className="mx-auto max-w-6xl px-4 pb-10">
       <h2 className="mb-3 text-lg font-bold sm:mb-4 sm:text-xl">Veja quem já usa</h2>
       <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
-        {VIDEOS.map((v) => (
-          <VideoCard key={v.asset_id} url={v.url} />
+        {VIDEOS.map((v, i) => (
+          <VideoCard key={v.asset_id} url={v.url} n={i + 1} />
         ))}
       </div>
     </section>
