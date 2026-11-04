@@ -388,6 +388,8 @@ export async function markOrderPaid(
     .select(ORDER_COLS)
     .maybeSingle();
   if (!updated) return false; // já estava pago (ou não existe): não reprocessa
+  // Código de rastreio da loja (BHY…) gerado na hora da aprovação.
+  await import("./order-code.server").then((m) => m.ensureOrderCode(orderId)).catch(() => null);
   await db
     .from("events")
     .insert({
