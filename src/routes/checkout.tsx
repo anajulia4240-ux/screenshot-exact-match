@@ -256,6 +256,19 @@ function CheckoutPage() {
       content_ids: lines.map((l) => l.p.slug),
       content_type: "product",
     });
+    // Link do e-mail de recuperação: /checkout?kit=slug:qtd,slug:qtd remonta o carrinho.
+    try {
+      const kit = new URLSearchParams(window.location.search).get("kit");
+      if (kit) {
+        for (const part of kit.split(",").slice(0, 5)) {
+          const [slug = "", q = "1"] = part.split(":");
+          const qty = Math.min(Math.max(parseInt(q, 10) || 1, 1), 10);
+          if (findProduct(slug)) setQty(slug, qty);
+        }
+      }
+    } catch {
+      /* ignorado */
+    }
     const s = loadSaved();
     // Veio do pop-up de identificação (só nome + WhatsApp): já preenche direto.
     if (s && !s.customer.email) {
