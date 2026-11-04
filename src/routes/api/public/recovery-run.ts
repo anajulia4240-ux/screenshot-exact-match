@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 /**
  * Recuperação de vendas por e-mail (checkout abandonado + PIX não pago).
- * Chamado pelo agendamento a cada 10 minutos com o segredo LOVABLE_CRON_SECRET
+ * Chamado pelo agendamento a cada 1 minuto com o segredo LOVABLE_CRON_SECRET
  * (header "Authorization: Bearer <segredo>" ou "x-cron-secret").
  */
 async function handle(request: Request): Promise<Response> {

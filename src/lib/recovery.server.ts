@@ -1,14 +1,14 @@
 // Recuperação de vendas por e-mail (Resend) — SOMENTE servidor.
 //
-// 1) Checkout abandonado: a cliente informou o e-mail no checkout e, 30 min depois,
+// 1) Checkout abandonado: a cliente informou o e-mail no checkout e, 5 min depois,
 //    não gerou PIX. Recebe "Seu kit está te esperando" com os itens do carrinho,
 //    o cupom HAPPY10 e um botão que remonta o carrinho.
-// 2) PIX não pago: gerou o PIX e, 20 min depois, não pagou. Recebe "Seu pedido está
+// 2) PIX não pago: gerou o PIX e, 5 min depois, não pagou. Recebe "Seu pedido está
 //    reservado" com o PIX copia-e-cola (se ainda valer) e o botão para finalizar.
 //
 // Cada e-mail sai uma vez só (registro em events: email_sent / email_failed).
 // Roda pelo /api/public/recovery-run (agendado) e também "de carona" nas visitas da loja,
-// no máximo a cada 5 minutos.
+// no máximo a cada 1 minuto.
 
 import { findProduct } from "@/lib/catalog";
 import { IDENTIFICATION_COUPON } from "@/lib/coupon-defaults";
@@ -24,12 +24,12 @@ import {
 } from "./email.server";
 
 const MIN = 60 * 1000;
-const CHECKOUT_AFTER_MS = 30 * MIN;
-const PIX_AFTER_MS = 20 * MIN;
+const CHECKOUT_AFTER_MS = 5 * MIN;
+const PIX_AFTER_MS = 5 * MIN;
 const MAX_AGE_MS = 48 * 60 * MIN;
 const MAX_EMAILS_PER_RUN = 25;
 const LAST_RUN_KEY = "recovery_last_run";
-const THROTTLE_MS = 5 * MIN;
+const THROTTLE_MS = 1 * MIN;
 
 type Db = Awaited<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"];
 type Line = { slug: string; name: string; qty: number; price: number; image?: string };
