@@ -15,14 +15,17 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as RastreioRouteImport } from './routes/rastreio'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as AuthenticatedCampaignsRouteImport } from './routes/_authenticated/campaigns'
 import { Route as AuthenticatedCouponsRouteImport } from './routes/_authenticated/coupons'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedEventsRouteImport } from './routes/_authenticated/events'
 import { Route as AuthenticatedGodRouteImport } from './routes/_authenticated/god'
 import { Route as AuthenticatedLogsRouteImport } from './routes/_authenticated/logs'
 import { Route as AuthenticatedOrdersRouteImport } from './routes/_authenticated/orders'
+import { Route as AuthenticatedPricesRouteImport } from './routes/_authenticated/prices'
 import { Route as AuthenticatedSecurityRouteImport } from './routes/_authenticated/security'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedTrackingRouteImport } from './routes/_authenticated/tracking'
 import { Route as AuthenticatedVisitorsRouteImport } from './routes/_authenticated/visitors'
 import { Route as ApiPublicCouponRouteImport } from './routes/api/public/coupon'
 import { Route as ApiPublicLeadRouteImport } from './routes/api/public/lead'
@@ -31,6 +34,7 @@ import { Route as ApiPublicPaymentWebhookRouteImport } from './routes/api/public
 import { Route as ApiPublicPixRouteImport } from './routes/api/public/pix'
 import { Route as ApiPublicPixStatusRouteImport } from './routes/api/public/pix-status'
 import { Route as ApiPublicRastreioRouteImport } from './routes/api/public/rastreio'
+import { Route as ApiPublicRecoveryRunRouteImport } from './routes/api/public/recovery-run'
 import { Route as ApiPublicTrackRouteImport } from './routes/api/public/track'
 
 const IndexRoute = IndexRouteImport.update({
@@ -62,6 +66,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedCampaignsRoute = AuthenticatedCampaignsRouteImport.update({
+  id: '/campaigns',
+  path: '/campaigns',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedCouponsRoute = AuthenticatedCouponsRouteImport.update({
   id: '/coupons',
   path: '/coupons',
@@ -92,6 +101,11 @@ const AuthenticatedOrdersRoute = AuthenticatedOrdersRouteImport.update({
   path: '/orders',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPricesRoute = AuthenticatedPricesRouteImport.update({
+  id: '/prices',
+  path: '/prices',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedSecurityRoute = AuthenticatedSecurityRouteImport.update({
   id: '/security',
   path: '/security',
@@ -100,6 +114,11 @@ const AuthenticatedSecurityRoute = AuthenticatedSecurityRouteImport.update({
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedTrackingRoute = AuthenticatedTrackingRouteImport.update({
+  id: '/tracking',
+  path: '/tracking',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedVisitorsRoute = AuthenticatedVisitorsRouteImport.update({
@@ -142,6 +161,11 @@ const ApiPublicRastreioRoute = ApiPublicRastreioRouteImport.update({
   path: '/api/public/rastreio',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicRecoveryRunRoute = ApiPublicRecoveryRunRouteImport.update({
+  id: '/api/public/recovery-run',
+  path: '/api/public/recovery-run',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicTrackRoute = ApiPublicTrackRouteImport.update({
   id: '/api/public/track',
   path: '/api/public/track',
@@ -154,14 +178,17 @@ export interface FileRoutesByFullPath {
   '/checkout': typeof CheckoutRoute
   '/rastreio': typeof RastreioRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/campaigns': typeof AuthenticatedCampaignsRoute
   '/coupons': typeof AuthenticatedCouponsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/events': typeof AuthenticatedEventsRoute
   '/god': typeof AuthenticatedGodRoute
   '/logs': typeof AuthenticatedLogsRoute
   '/orders': typeof AuthenticatedOrdersRoute
+  '/prices': typeof AuthenticatedPricesRoute
   '/security': typeof AuthenticatedSecurityRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/tracking': typeof AuthenticatedTrackingRoute
   '/visitors': typeof AuthenticatedVisitorsRoute
   '/api/public/coupon': typeof ApiPublicCouponRoute
   '/api/public/lead': typeof ApiPublicLeadRoute
@@ -170,6 +197,7 @@ export interface FileRoutesByFullPath {
   '/api/public/pix': typeof ApiPublicPixRoute
   '/api/public/pix-status': typeof ApiPublicPixStatusRoute
   '/api/public/rastreio': typeof ApiPublicRastreioRoute
+  '/api/public/recovery-run': typeof ApiPublicRecoveryRunRoute
   '/api/public/track': typeof ApiPublicTrackRoute
 }
 export interface FileRoutesByTo {
@@ -178,14 +206,17 @@ export interface FileRoutesByTo {
   '/checkout': typeof CheckoutRoute
   '/rastreio': typeof RastreioRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/campaigns': typeof AuthenticatedCampaignsRoute
   '/coupons': typeof AuthenticatedCouponsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/events': typeof AuthenticatedEventsRoute
   '/god': typeof AuthenticatedGodRoute
   '/logs': typeof AuthenticatedLogsRoute
   '/orders': typeof AuthenticatedOrdersRoute
+  '/prices': typeof AuthenticatedPricesRoute
   '/security': typeof AuthenticatedSecurityRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/tracking': typeof AuthenticatedTrackingRoute
   '/visitors': typeof AuthenticatedVisitorsRoute
   '/api/public/coupon': typeof ApiPublicCouponRoute
   '/api/public/lead': typeof ApiPublicLeadRoute
@@ -194,6 +225,7 @@ export interface FileRoutesByTo {
   '/api/public/pix': typeof ApiPublicPixRoute
   '/api/public/pix-status': typeof ApiPublicPixStatusRoute
   '/api/public/rastreio': typeof ApiPublicRastreioRoute
+  '/api/public/recovery-run': typeof ApiPublicRecoveryRunRoute
   '/api/public/track': typeof ApiPublicTrackRoute
 }
 export interface FileRoutesById {
@@ -204,14 +236,17 @@ export interface FileRoutesById {
   '/checkout': typeof CheckoutRoute
   '/rastreio': typeof RastreioRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/_authenticated/campaigns': typeof AuthenticatedCampaignsRoute
   '/_authenticated/coupons': typeof AuthenticatedCouponsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/events': typeof AuthenticatedEventsRoute
   '/_authenticated/god': typeof AuthenticatedGodRoute
   '/_authenticated/logs': typeof AuthenticatedLogsRoute
   '/_authenticated/orders': typeof AuthenticatedOrdersRoute
+  '/_authenticated/prices': typeof AuthenticatedPricesRoute
   '/_authenticated/security': typeof AuthenticatedSecurityRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/tracking': typeof AuthenticatedTrackingRoute
   '/_authenticated/visitors': typeof AuthenticatedVisitorsRoute
   '/api/public/coupon': typeof ApiPublicCouponRoute
   '/api/public/lead': typeof ApiPublicLeadRoute
@@ -220,6 +255,7 @@ export interface FileRoutesById {
   '/api/public/pix': typeof ApiPublicPixRoute
   '/api/public/pix-status': typeof ApiPublicPixStatusRoute
   '/api/public/rastreio': typeof ApiPublicRastreioRoute
+  '/api/public/recovery-run': typeof ApiPublicRecoveryRunRoute
   '/api/public/track': typeof ApiPublicTrackRoute
 }
 export interface FileRouteTypes {
@@ -230,14 +266,17 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/rastreio'
     | '/reset-password'
+    | '/campaigns'
     | '/coupons'
     | '/dashboard'
     | '/events'
     | '/god'
     | '/logs'
     | '/orders'
+    | '/prices'
     | '/security'
     | '/settings'
+    | '/tracking'
     | '/visitors'
     | '/api/public/coupon'
     | '/api/public/lead'
@@ -246,6 +285,7 @@ export interface FileRouteTypes {
     | '/api/public/pix'
     | '/api/public/pix-status'
     | '/api/public/rastreio'
+    | '/api/public/recovery-run'
     | '/api/public/track'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -254,14 +294,17 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/rastreio'
     | '/reset-password'
+    | '/campaigns'
     | '/coupons'
     | '/dashboard'
     | '/events'
     | '/god'
     | '/logs'
     | '/orders'
+    | '/prices'
     | '/security'
     | '/settings'
+    | '/tracking'
     | '/visitors'
     | '/api/public/coupon'
     | '/api/public/lead'
@@ -270,6 +313,7 @@ export interface FileRouteTypes {
     | '/api/public/pix'
     | '/api/public/pix-status'
     | '/api/public/rastreio'
+    | '/api/public/recovery-run'
     | '/api/public/track'
   id:
     | '__root__'
@@ -279,14 +323,17 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/rastreio'
     | '/reset-password'
+    | '/_authenticated/campaigns'
     | '/_authenticated/coupons'
     | '/_authenticated/dashboard'
     | '/_authenticated/events'
     | '/_authenticated/god'
     | '/_authenticated/logs'
     | '/_authenticated/orders'
+    | '/_authenticated/prices'
     | '/_authenticated/security'
     | '/_authenticated/settings'
+    | '/_authenticated/tracking'
     | '/_authenticated/visitors'
     | '/api/public/coupon'
     | '/api/public/lead'
@@ -295,6 +342,7 @@ export interface FileRouteTypes {
     | '/api/public/pix'
     | '/api/public/pix-status'
     | '/api/public/rastreio'
+    | '/api/public/recovery-run'
     | '/api/public/track'
   fileRoutesById: FileRoutesById
 }
@@ -312,6 +360,7 @@ export interface RootRouteChildren {
   ApiPublicPixRoute: typeof ApiPublicPixRoute
   ApiPublicPixStatusRoute: typeof ApiPublicPixStatusRoute
   ApiPublicRastreioRoute: typeof ApiPublicRastreioRoute
+  ApiPublicRecoveryRunRoute: typeof ApiPublicRecoveryRunRoute
   ApiPublicTrackRoute: typeof ApiPublicTrackRoute
 }
 
@@ -359,6 +408,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/campaigns': {
+      id: '/_authenticated/campaigns'
+      path: '/campaigns'
+      fullPath: '/campaigns'
+      preLoaderRoute: typeof AuthenticatedCampaignsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/coupons': {
       id: '/_authenticated/coupons'
       path: '/coupons'
@@ -401,6 +457,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOrdersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/prices': {
+      id: '/_authenticated/prices'
+      path: '/prices'
+      fullPath: '/prices'
+      preLoaderRoute: typeof AuthenticatedPricesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/security': {
       id: '/_authenticated/security'
       path: '/security'
@@ -413,6 +476,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/tracking': {
+      id: '/_authenticated/tracking'
+      path: '/tracking'
+      fullPath: '/tracking'
+      preLoaderRoute: typeof AuthenticatedTrackingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/visitors': {
@@ -471,6 +541,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicRastreioRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/recovery-run': {
+      id: '/api/public/recovery-run'
+      path: '/api/public/recovery-run'
+      fullPath: '/api/public/recovery-run'
+      preLoaderRoute: typeof ApiPublicRecoveryRunRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/track': {
       id: '/api/public/track'
       path: '/api/public/track'
@@ -482,26 +559,32 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedCampaignsRoute: typeof AuthenticatedCampaignsRoute
   AuthenticatedCouponsRoute: typeof AuthenticatedCouponsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedEventsRoute: typeof AuthenticatedEventsRoute
   AuthenticatedGodRoute: typeof AuthenticatedGodRoute
   AuthenticatedLogsRoute: typeof AuthenticatedLogsRoute
   AuthenticatedOrdersRoute: typeof AuthenticatedOrdersRoute
+  AuthenticatedPricesRoute: typeof AuthenticatedPricesRoute
   AuthenticatedSecurityRoute: typeof AuthenticatedSecurityRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedTrackingRoute: typeof AuthenticatedTrackingRoute
   AuthenticatedVisitorsRoute: typeof AuthenticatedVisitorsRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedCampaignsRoute: AuthenticatedCampaignsRoute,
   AuthenticatedCouponsRoute: AuthenticatedCouponsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedEventsRoute: AuthenticatedEventsRoute,
   AuthenticatedGodRoute: AuthenticatedGodRoute,
   AuthenticatedLogsRoute: AuthenticatedLogsRoute,
   AuthenticatedOrdersRoute: AuthenticatedOrdersRoute,
+  AuthenticatedPricesRoute: AuthenticatedPricesRoute,
   AuthenticatedSecurityRoute: AuthenticatedSecurityRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedTrackingRoute: AuthenticatedTrackingRoute,
   AuthenticatedVisitorsRoute: AuthenticatedVisitorsRoute,
 }
 
@@ -522,18 +605,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicPixRoute: ApiPublicPixRoute,
   ApiPublicPixStatusRoute: ApiPublicPixStatusRoute,
   ApiPublicRastreioRoute: ApiPublicRastreioRoute,
+  ApiPublicRecoveryRunRoute: ApiPublicRecoveryRunRoute,
   ApiPublicTrackRoute: ApiPublicTrackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
