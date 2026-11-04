@@ -5,12 +5,19 @@ const TYPES = [
   "page_view",
   "click",
   "product_view",
+  "section_view",
+  "video_play",
+  "whatsapp_click",
+  "identification_shown",
+  "identification_skipped",
   "add_to_cart",
   "checkout_opened",
   "checkout_filling",
   "checkout_step",
+  "coupon_applied",
   "lead_identified",
   "pix_generated",
+  "pix_copied",
   "pix_failed",
   "pix_paid",
 ] as const;
@@ -44,14 +51,16 @@ export const Route = createFileRoute("/api/public/track")({
 
         // Sessão: reaproveita se existir, senão cria.
         let sessionId = b.session_id ?? null;
+        let leadId: string | null = null;
         if (sessionId) {
           const { data } = await db
             .from("sessions")
             .update({ last_seen_at: now, current_page: b.page ?? null })
             .eq("id", sessionId)
-            .select("id")
+            .select("id, lead_id")
             .maybeSingle();
           if (!data) sessionId = null;
+          else leadId = data.lead_id ?? null;
         }
         if (!sessionId) {
           const { data, error } = await db
@@ -71,8 +80,10 @@ export const Route = createFileRoute("/api/public/track")({
           sessionId = data.id;
         }
 
+        // Depois que a pessoa se identifica, cada evento já sai com o lead dela.
         await db.from("events").insert({
           session_id: sessionId,
+          lead_id: leadId,
           type: b.type,
           page: b.page ?? null,
           value_cents: typeof b.data?.["value_cents"] === "number" ? b.data["value_cents"] : null,
