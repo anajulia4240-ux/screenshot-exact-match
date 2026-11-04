@@ -40,6 +40,15 @@ export const Route = createFileRoute("/_authenticated/orders")({
 
 type Order = Tables<"orders">;
 
+/** Origem da confirmação de pagamento ("gateway" = registros antigos, vindos da tela do PIX). */
+const CONFIRM_LABEL: Record<string, string> = {
+  webhook: "webhook",
+  reconcile: "conferência automática",
+  pix_screen: "tela do PIX",
+  gateway: "tela do PIX",
+  manual: "manual",
+};
+
 const STATUS = {
   paid: { l: "Pago", cls: "bg-green-100 text-green-700 border-green-200" },
   pending: { l: "Pendente", cls: "bg-orange-100 text-orange-700 border-orange-200" },
