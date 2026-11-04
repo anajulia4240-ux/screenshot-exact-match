@@ -24,6 +24,8 @@ export const Route = createFileRoute("/")({
       { property: "og:description", content: "Kits Happy Hair originais com desconto e brindes grátis." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:image", content: bannerAsset.url.startsWith("https://") ? bannerAsset.url : "https://planetamundo.shop" + bannerAsset.url },
+      { name: "twitter:image", content: bannerAsset.url.startsWith("https://") ? bannerAsset.url : "https://planetamundo.shop" + bannerAsset.url },
     ],
   }),
   component: StorePage,
