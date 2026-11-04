@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { builtinCoupon } from "@/lib/coupon-defaults";
+import { DEFAULT_SHIPPING, shippingById } from "@/lib/shipping";
 import { findProduct, priceFor } from "@/lib/catalog";
 import { isValidCpf, isValidPhone, onlyDigits, phoneE164 } from "@/lib/br";
 
@@ -23,7 +24,7 @@ const Body = z.object({
     state: z.string().trim().length(2),
   }),
   coupon: z.string().trim().max(40).optional(),
-  shipping: z.enum(["sedex", "jadlog"]).optional(),
+  shipping: z.enum(["gratis", "sedex", "jadlog"]).optional(),
   items: z
     .array(z.object({ slug: z.string().max(200), qty: z.number().int().min(1).max(20) }))
     .min(1)
@@ -84,7 +85,9 @@ export const Route = createFileRoute("/api/public/pix")({
           couponCode = c.code;
           discount = Math.round((subtotal * Number(c.percent)) / 100);
         }
-        const total = subtotal - discount;
+        // Frete: valor vem SEMPRE da tabela do servidor (1 opção grátis + 2 pagas).
+        const ship = shippingById(b.shipping ?? DEFAULT_SHIPPING);
+        const total = subtotal - discount + ship.price_cents;
         if (total < 100)
           return Response.json({ error: "Valor do pedido inválido." }, { status: 400 });
 
@@ -104,7 +107,7 @@ export const Route = createFileRoute("/api/public/pix")({
           client_user_agent: ua,
           customer: { cpf },
           address: { ...b.address, cep: onlyDigits(b.address.cep) },
-          shipping: { method: b.shipping ?? "sedex", price_cents: 0 },
+          shipping: { method: ship.id, name: ship.name, price_cents: ship.price_cents },
           ...(couponCode ? { coupon: { code: couponCode, discount_cents: discount } } : {}),
           subtotal_cents: subtotal,
         };
