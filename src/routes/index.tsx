@@ -16,9 +16,9 @@ import bannerAsset from "@/assets/banner-byhappy.png.asset.json";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "byhappy — Kits Happy Hair com desconto | Revendedora" },
+      { title: "byhappy | Kits Happy Hair com Brindes e Frete Grátis" },
       { name: "description", content: "Kits Happy Hair originais com brindes e até 80% de desconto. Revendedora autorizada, pagamento via PIX." },
-      { property: "og:title", content: "byhappy — Kits Happy Hair" },
+      { property: "og:title", content: "byhappy | Kits Happy Hair com Brindes e Frete Grátis" },
       { property: "og:description", content: "Kits Happy Hair originais com desconto e brindes grátis." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
