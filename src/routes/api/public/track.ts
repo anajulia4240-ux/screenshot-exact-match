@@ -16,6 +16,7 @@ const TYPES = [
   "checkout_step",
   "coupon_applied",
   "lead_identified",
+  "lead_captured",
   "pix_generated",
   "pix_copied",
   "pix_failed",
@@ -80,6 +81,17 @@ export const Route = createFileRoute("/api/public/track")({
           sessionId = data.id;
         }
 
+        // O popup pode salvar antes da primeira sessão: vincula usando o ID retornado pelo lead.
+        if (b.type === "lead_captured") {
+          const id = z.string().uuid().safeParse(b.data?.["lead_id"]);
+          if (id.success) {
+            const { data: lead } = await db.from("leads").select("id").eq("id", id.data).maybeSingle();
+            if (lead) {
+              leadId = lead.id;
+              await db.from("sessions").update({ lead_id: leadId }).eq("id", sessionId);
+            }
+          }
+        }
         // Depois que a pessoa se identifica, cada evento já sai com o lead dela.
         await db.from("events").insert({
           session_id: sessionId,

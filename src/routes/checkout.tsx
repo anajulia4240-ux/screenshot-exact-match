@@ -28,6 +28,7 @@ import {
 import { toast } from "sonner";
 import { findProduct } from "@/lib/catalog";
 import { IDENTIFICATION_COUPON } from "@/lib/coupon-defaults";
+import { prefillName, readWelcomeCoupon } from "@/lib/identification";
 import { clearCart, setQty, useCart } from "@/lib/cart";
 import { brl } from "@/lib/store";
 import { isValidCpf, isValidPhone, maskCep, maskCpf, maskPhone, onlyDigits } from "@/lib/br";
@@ -134,7 +135,7 @@ function loadSaved(): { customer: Customer; address: Address } | null {
     } | null;
     return v?.customer?.name
       ? {
-          customer: { ...EMPTY_CUSTOMER, ...v.customer },
+          customer: { ...EMPTY_CUSTOMER, ...v.customer, name: prefillName(v.customer.name) },
           address: { ...EMPTY_ADDRESS, ...(v.address ?? {}) },
         }
       : null;
@@ -279,6 +280,21 @@ function CheckoutPage() {
   const itemCount = lines.reduce((n, l) => n + l.qty, 0);
   const compareTotal = lines.reduce((s, l) => s + Math.max(l.p.compareAt, l.p.price) * l.qty, 0);
   const savings = compareTotal - total;
+
+  useEffect(() => {
+    const welcome = readWelcomeCoupon();
+    if (!welcome || subtotal <= 0) return;
+    let active = true;
+    void fetch(`/api/public/coupon?code=${encodeURIComponent(welcome.code)}&subtotal=${subtotal}`)
+      .then((response) => response.json())
+      .then((result: { valid?: boolean; code?: string; percent?: number }) => {
+        if (active && result.valid && result.code && result.percent) {
+          setCoupon({ code: result.code, percent: result.percent });
+          setCouponInput(result.code);
+        }
+      }).catch(() => { /* mantém a compra disponível */ });
+    return () => { active = false; };
+  }, [subtotal]);
 
   useEffect(() => {
     void track("checkout_opened", { value_cents: subtotal });

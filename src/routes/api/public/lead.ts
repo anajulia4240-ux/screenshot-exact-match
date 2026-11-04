@@ -1,14 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
+import { identificationSchema } from "@/lib/identification";
 
 const Body = z.object({
   lead_id: z.string().uuid().nullable().optional(),
   session_id: z.string().uuid().nullable().optional(),
   name: z.string().trim().min(2).max(120),
   phone: z.string().trim().min(8).max(30),
+  identification: z.boolean().optional(),
   // A etapa Identificação pede só nome + WhatsApp; o e-mail chega depois, no pagamento.
   email: z.string().trim().email().max(200).optional(),
   utm: z.record(z.string().max(60), z.string().max(200)).optional(),
+}).superRefine((value, context) => {
+  if (value.identification && !identificationSchema.safeParse(value).success)
+    context.addIssue({ code: z.ZodIssueCode.custom, message: "Identificação inválida." });
 });
 
 /** Checkout: grava/atualiza o lead na hora (recuperação por WhatsApp/e-mail e campanha). */

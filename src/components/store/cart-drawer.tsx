@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ChevronDown, Minus, Plus, Ticket, Trash2, Truck, X } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { findProduct } from "@/lib/catalog";
 import { setCartOpen, setQty, useCart, useCartOpen } from "@/lib/cart";
 import { brl } from "@/lib/store";
+import { readWelcomeCoupon } from "@/lib/identification";
 
 /** Gaveta lateral do carrinho no estilo da referência (abre pelo botão Carrinho ou ao comprar). */
 export function CartDrawer() {
@@ -18,6 +19,19 @@ export function CartDrawer() {
   const subtotal = lines.reduce((s, l) => s + l.p.price * l.qty, 0);
   const compare = lines.reduce((s, l) => s + Math.max(l.p.compareAt, l.p.price) * l.qty, 0);
   const saving = compare - subtotal;
+  const [welcomeCoupon, setWelcomeCoupon] = useState<{ code: string; percent: number } | null>(null);
+  useEffect(() => {
+    const saved = readWelcomeCoupon();
+    if (!open || !saved || subtotal <= 0) return;
+    let active = true;
+    void fetch(`/api/public/coupon?code=${encodeURIComponent(saved.code)}&subtotal=${subtotal}`)
+      .then((response) => response.json())
+      .then((result: { valid?: boolean; code?: string; percent?: number }) => {
+        if (active) setWelcomeCoupon(result.valid && result.code && result.percent ? { code: result.code, percent: result.percent } : null);
+      }).catch(() => { if (active) setWelcomeCoupon(null); });
+    return () => { active = false; };
+  }, [open, subtotal]);
+  const welcomeDiscount = welcomeCoupon ? Math.round(subtotal * welcomeCoupon.percent / 100) : 0;
 
   return (
     <Sheet open={open} onOpenChange={setCartOpen}>
@@ -75,7 +89,7 @@ export function CartDrawer() {
               {showFrete && <p className="border-b py-3 text-sm text-muted-foreground">Frete grátis para todo o Brasil.</p>}
               <div className="flex items-center justify-between border-b py-4 text-sm">
                 <span className="flex items-center gap-2 font-semibold"><Ticket className="h-4 w-4" /> Cupom</span>
-                <span className="text-primary">Aplique no pagamento</span>
+                <span className="text-primary">{welcomeCoupon ? `${welcomeCoupon.code} · ${welcomeCoupon.percent}% OFF` : "Aplique no pagamento"}</span>
               </div>
             </>
           )}
@@ -87,7 +101,8 @@ export function CartDrawer() {
             {saving > 0 && (
               <p className="flex justify-between text-sm text-success"><span className="font-semibold uppercase">Desconto</span><span>- {brl(saving)}</span></p>
             )}
-            <p className="flex items-end justify-between pt-2"><span className="font-bold uppercase">Total</span><span className="text-2xl font-extrabold">{brl(subtotal)}</span></p>
+            {welcomeDiscount > 0 && <p className="flex justify-between text-sm text-success"><span>Cupom {welcomeCoupon?.code}</span><span>- {brl(welcomeDiscount)}</span></p>}
+            <p className="flex items-end justify-between pt-2"><span className="font-bold uppercase">Total</span><span className="text-2xl font-extrabold">{brl(subtotal - welcomeDiscount)}</span></p>
             <Link
               to="/checkout"
               onClick={() => setCartOpen(false)}

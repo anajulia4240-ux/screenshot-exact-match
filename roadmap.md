@@ -1,4 +1,5 @@
 # Roadmap
+- [x] Popup obrigatório de identificação, cupom automático e pré-preenchimento; primeira visita, fechamento bloqueado e exclusão do checkout validados.
 - [x] Painel admin da loja: Ao vivo, Eventos, Pedidos, Modo Deus (trava + chat), Visitantes, Segurança, Logs, Cupons
 - [x] Loja byhappy: catálogo, carrinho e pedido PIX caindo no painel
 - [x] Loja: envio de eventos e captura de IP no servidor
