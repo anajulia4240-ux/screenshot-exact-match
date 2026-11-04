@@ -128,18 +128,20 @@ async function checkoutAbandoned(db: Db, budget: number): Promise<number> {
     const first = escapeHtml(str(lead.name).trim().split(" ")[0] || "");
     const href = cartLink(lines, "checkout_abandonado");
     const html = layout(
-      `${first ? `${first}, s` : "S"}eu kit está te esperando 💖`,
-      `<p style="margin:0 0 12px">Vimos que você começou seu pedido e não finalizou. Guardamos tudo para você continuar de onde parou.</p>
+      `${first ? `${first}, s` : "S"}eu pedido ficou guardado`,
+      `<p style="margin:0 0 12px">Notamos que você começou sua compra, mas ela não foi concluída. Separamos os itens para você finalizar com tranquilidade, sem precisar começar de novo.</p>
        ${itemsHtml(lines)}
-       <div style="background:#ecfdf5;border:2px dashed #10b981;border-radius:12px;padding:12px;text-align:center;margin:12px 0">
-         <p style="margin:0;font-size:13px;color:#047857">Seu presente ainda vale:</p>
-         <p style="margin:4px 0 0;font-size:22px;font-weight:800;letter-spacing:2px;color:#047857">${IDENTIFICATION_COUPON.code} — ${IDENTIFICATION_COUPON.percent}% OFF</p>
-       </div>
-       ${button(href, "Finalizar meu pedido")}
-       <p style="margin:12px 0 0;font-size:13px;color:#555">Frete grátis para todo o Brasil • Envio imediato após o PIX • Código de rastreio na hora</p>`,
+       <table role="presentation" width="100%" style="margin:16px 0;border:1px dashed ${"#d6408b"};border-radius:12px;background:#fdf2f7"><tr><td style="padding:14px;text-align:center">
+         <div style="font-size:13px;color:#555">Cupom exclusivo para concluir seu pedido</div>
+         <div style="margin-top:6px;font-size:22px;font-weight:800;letter-spacing:3px;color:#d6408b">${IDENTIFICATION_COUPON.code}</div>
+         <div style="font-size:13px;color:#555">${IDENTIFICATION_COUPON.percent}% de desconto aplicado no checkout</div>
+       </td></tr></table>
+       ${button(href, "Concluir meu pedido")}
+       <p style="margin:14px 0 0;font-size:13px;color:#666;text-align:center">Estoque limitado — a reserva dos itens não é garantida por muito tempo.</p>`,
+      `Seus itens estão separados e você ainda tem ${IDENTIFICATION_COUPON.percent}% de desconto para finalizar.`,
     );
-    const text = `Seu kit está te esperando! Finalize seu pedido com ${IDENTIFICATION_COUPON.percent}% OFF usando o cupom ${IDENTIFICATION_COUPON.code}: ${href}`;
-    const err = await deliverEmail({ to: email, subject: `${first ? `${first}, s` : "S"}eu kit Happy Hair ficou no carrinho 💖`, html, text });
+    const text = `${first ? `${first}, s` : "S"}eu pedido ficou guardado. Finalize com ${IDENTIFICATION_COUPON.percent}% de desconto usando o cupom ${IDENTIFICATION_COUPON.code}: ${href}`;
+    const err = await deliverEmail({ to: email, subject: `${first ? `${first}, s` : "S"}eu pedido na byhappy ficou guardado`, html, text });
     await record(db, !err, kind, email, lead.id, err ? { error: err } : {});
     if (!err) sent++;
   }
@@ -194,19 +196,20 @@ async function pixPending(db: Db, budget: number): Promise<number> {
     const href = cartLink(lines, "pix_pendente");
     const short = o.id.slice(0, 8).toUpperCase();
     const pixBox = pixValid
-      ? `<p style="margin:12px 0 6px;font-size:14px">Seu PIX ainda está valendo. Copie o código abaixo e cole no app do seu banco (PIX Copia e Cola):</p>
-         <div style="font-family:monospace;font-size:11px;word-break:break-all;background:#f3f4f6;border-radius:10px;padding:10px">${escapeHtml(pixCode)}</div>`
-      : `<p style="margin:12px 0 0;font-size:14px">O PIX anterior expirou, mas é rapidinho gerar outro no botão abaixo.</p>`;
+      ? `<p style="margin:16px 0 6px;font-size:14px"><b>Seu PIX ainda está válido.</b> Copie o código abaixo e cole no aplicativo do seu banco, na opção PIX Copia e Cola:</p>
+         <div style="font-family:monospace;font-size:11px;word-break:break-all;background:#f5f5f5;border:1px solid #e5e5e5;border-radius:10px;padding:12px">${escapeHtml(pixCode)}</div>`
+      : `<p style="margin:16px 0 0;font-size:14px">O código PIX anterior expirou. Gere um novo em poucos segundos pelo botão abaixo.</p>`;
     const html = layout(
-      `${first ? `${first}, s` : "S"}eu pedido está reservado ⏳`,
-      `<p style="margin:0 0 8px">Seu pedido <b>#${short}</b> de <b>${brl(o.total_cents)}</b> está separado, só falta o pagamento.</p>
+      `${first ? `${first}, s` : "S"}eu pedido #${short} aguarda pagamento`,
+      `<p style="margin:0 0 8px">Seu pedido de <b>${brl(o.total_cents)}</b> está reservado em seu nome. Falta apenas confirmar o pagamento para enviarmos.</p>
        ${itemsHtml(lines)}
        ${pixBox}
-       ${button(href, pixValid ? "Gerar um novo PIX" : "Finalizar meu pedido")}
-       <p style="margin:12px 0 0;font-size:13px;color:#555">Assim que o PIX é aprovado, você recebe o código de rastreio na hora e o envio é imediato.</p>`,
+       ${button(href, pixValid ? "Gerar novo PIX" : "Finalizar pagamento")}
+       <p style="margin:14px 0 0;font-size:13px;color:#666;text-align:center">Após a aprovação do PIX, você recebe o código de rastreio na hora e o envio é imediato.</p>`,
+      `Pedido #${short} reservado — conclua o PIX para liberar o envio imediato.`,
     );
     const text = `Seu pedido #${short} (${brl(o.total_cents)}) está reservado. ${pixValid ? `PIX copia e cola: ${pixCode}. ` : ""}Finalize em: ${href}`;
-    const err = await deliverEmail({ to: email, subject: `${first ? `${first}, s` : "S"}eu pedido #${short} está reservado — falta só o PIX`, html, text });
+    const err = await deliverEmail({ to: email, subject: `Pedido #${short} aguardando pagamento — byhappy`, html, text });
     await record(db, !err, kind, email, o.lead_id ?? null, { order_id: o.id, ...(err ? { error: err } : {}) });
     if (!err) sent++;
   }
