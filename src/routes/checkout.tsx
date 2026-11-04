@@ -225,6 +225,7 @@ function CheckoutPage() {
   const [coupon, setCoupon] = useState<{ code: string; percent: number } | null>(null);
   const [pix, setPix] = useState<Pix | null>(null);
   const [paid, setPaid] = useState(false);
+  const [prefilled, setPrefilled] = useState(false);
   const [orderCode, setOrderCode] = useState<string | null>(null);
   const [codeCopied, setCodeCopied] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -257,9 +258,9 @@ function CheckoutPage() {
     const s = loadSaved();
     // Veio do pop-up de identificação (só nome + WhatsApp): já preenche direto.
     if (s && !s.customer.email) {
+      // Veio do pop-up: nome e WhatsApp já preenchidos, ela só completa o e-mail.
       setCustomer(s.customer);
-      // Já se identificou no pop-up (nome + WhatsApp): pula a Identificação e vai direto para a entrega.
-      if (identified(s.customer)) setStep(1);
+      setPrefilled(identified(s.customer));
     } else setSaved(s);
   }, []);
 
@@ -279,7 +280,6 @@ function CheckoutPage() {
     setCustomer(saved.customer);
     setAddress(saved.address);
     setSaved(null);
-    if (identified(saved.customer)) goto(1);
   }
 
   // ---------- Lead (nome + WhatsApp na etapa 1; e-mail completa no pagamento) ----------
@@ -318,9 +318,10 @@ function CheckoutPage() {
       return void toast.error("Informe nome e sobrenome.");
     if (!isValidPhone(customer.phone))
       return void toast.error("WhatsApp inválido. Use DDD + número.");
+    if (!/^\S+@\S+\.\S+$/.test(customer.email.trim())) return void toast.error("E-mail inválido.");
     setBusy(true);
     try {
-      await saveLead(false);
+      await saveLead(true);
     } catch {
       /* lead é best-effort: não trava a compra */
     }
@@ -400,7 +401,7 @@ function CheckoutPage() {
   async function generatePix() {
     if (generating.current) return; // bloqueia duplo clique
     if (!/^\S+@\S+\.\S+$/.test(customer.email.trim())) {
-      document.getElementById("pix-email")?.focus();
+      goto(0);
       return void toast.error("Informe um e-mail válido para receber a confirmação.");
     }
     if (!isValidCpf(customer.cpf)) {
@@ -409,7 +410,6 @@ function CheckoutPage() {
     }
     save(customer, address);
     fbqIdentify(customer);
-    void saveLead(true).catch(() => {});
     generating.current = true;
     setBusy(true);
     contentIds.current = lines.map((l) => l.p.slug);
@@ -810,7 +810,7 @@ function CheckoutPage() {
           <Section
             n={1}
             title="Identificação"
-            subtitle="Só nome e WhatsApp — e você ganha 10% OFF."
+            subtitle="Seus dados para o pedido — e você ganha 10% OFF."
             icon={User}
             active={step === 0}
             done={step > 0}
@@ -818,7 +818,7 @@ function CheckoutPage() {
             summary={
               <>
                 <p className="truncate">
-                  <span className="font-semibold text-foreground">{customer.name}</span> • {maskPhone(customer.phone)}
+                  <span className="font-semibold text-foreground">{customer.name}</span> • {maskPhone(customer.phone)} • {customer.email}
                 </p>
                 {!coupon && (
                   <p className="font-semibold text-success">🎁 10% OFF liberado — aplique o {IDENTIFICATION_COUPON.code} no pagamento</p>
@@ -830,8 +830,16 @@ function CheckoutPage() {
               <div className="flex items-center gap-3 rounded-xl border border-dashed border-success/50 bg-success/10 px-3.5 py-3">
                 <span className="text-2xl" aria-hidden>🎁</span>
                 <p className="text-[13px] leading-snug">
-                  <b className="text-success">Ganhe 10% OFF agora.</b> Informe seu nome e WhatsApp para liberar o cupom{" "}
-                  <b>{IDENTIFICATION_COUPON.code}</b>.
+                  {prefilled ? (
+                    <>
+                      <b className="text-success">Seu 10% OFF já está liberado!</b> Confira seus dados e complete com seu e-mail.
+                    </>
+                  ) : (
+                    <>
+                      <b className="text-success">Ganhe 10% OFF agora.</b> Preencha seus dados para liberar o cupom{" "}
+                      <b>{IDENTIFICATION_COUPON.code}</b>.
+                    </>
+                  )}
                 </p>
               </div>
               <Field label="Nome completo">
@@ -857,9 +865,22 @@ function CheckoutPage() {
                   onChange={(e) => setCustomer({ ...customer, phone: onlyDigits(e.target.value) })}
                 />
               </Field>
+              <Field label="E-mail" hint="Você recebe a confirmação do pedido e o rastreio aqui.">
+                <Input
+                  required
+                  autoFocus={prefilled}
+                  type="email"
+                  autoComplete="email"
+                  placeholder="seu@email.com"
+                  aria-label="E-mail"
+                  className={FIELD}
+                  value={customer.email}
+                  onChange={(e) => setCustomer({ ...customer, email: e.target.value })}
+                />
+              </Field>
               <div>
                 <Button type="submit" size="lg" className="h-12 w-full rounded-xl text-base font-bold" disabled={busy}>
-                  {busy && <Loader2 className="h-4 w-4 animate-spin" />}Liberar 10% OFF e continuar
+                  {busy && <Loader2 className="h-4 w-4 animate-spin" />}{prefilled ? "Continuar para entrega" : "Liberar 10% OFF e continuar"}
                   {!busy && <ArrowRight className="h-4 w-4" />}
                 </Button>
                 <p className="mt-2.5 flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
@@ -1058,32 +1079,18 @@ function CheckoutPage() {
                 <span className="text-right text-sm font-extrabold text-primary">{brl(total)}</span>
               </div>
 
-              {/* Dados para emissão do PIX */}
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <Field label="E-mail" hint="Você recebe a confirmação e o rastreio aqui.">
-                  <Input
-                    id="pix-email"
-                    type="email"
-                    autoComplete="email"
-                    placeholder="seu@email.com"
-                    aria-label="E-mail"
-                    className={FIELD}
-                    value={customer.email}
-                    onChange={(e) => setCustomer({ ...customer, email: e.target.value })}
-                  />
-                </Field>
-                <Field label="CPF" hint="Obrigatório para emitir o PIX.">
-                  <Input
-                    id="pix-cpf"
-                    inputMode="numeric"
-                    placeholder="000.000.000-00"
-                    aria-label="CPF"
-                    className={FIELD}
-                    value={maskCpf(customer.cpf)}
-                    onChange={(e) => setCustomer({ ...customer, cpf: onlyDigits(e.target.value) })}
-                  />
-                </Field>
-              </div>
+              {/* CPF para emissão do PIX */}
+              <Field label="CPF" hint="Obrigatório para emitir o PIX.">
+                <Input
+                  id="pix-cpf"
+                  inputMode="numeric"
+                  placeholder="000.000.000-00"
+                  aria-label="CPF"
+                  className={FIELD}
+                  value={maskCpf(customer.cpf)}
+                  onChange={(e) => setCustomer({ ...customer, cpf: onlyDigits(e.target.value) })}
+                />
+              </Field>
 
               {/* Cupom de identificação: toque para aplicar */}
               {!coupon && (
