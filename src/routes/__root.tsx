@@ -15,8 +15,9 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
 import { META_PIXEL_ID, captureTestEventCode, fbqTrack } from "@/lib/fbq";
-import { applyPriceOverrides, type PriceMap } from "@/lib/catalog";
+import { applyCustomProducts, applyPriceOverrides, type CustomProduct, type PriceMap } from "@/lib/catalog";
 import { getPublicPrices } from "@/lib/prices.functions";
+import { getPublicCustomProducts } from "@/lib/products-admin.functions";
 
 const UTMIFY_PIXEL_ID = "6ae9f434e4625a333942a594";
 
@@ -99,8 +100,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
     ],
   }),
-  // Preços definidos na aba Preços do painel (cache de 1 min).
-  loader: async (): Promise<PriceMap> => getPublicPrices().catch(() => ({})),
+  // Preços da aba Preços + produtos da aba "Adicionar produto" (cache de 1 min).
+  loader: async (): Promise<{ prices: PriceMap; custom: CustomProduct[] }> => {
+    const [prices, custom] = await Promise.all([
+      getPublicPrices().catch((): PriceMap => ({})),
+      getPublicCustomProducts().catch((): CustomProduct[] => []),
+    ]);
+    return { prices, custom };
+  },
   staleTime: 60_000,
   shellComponent: RootShell,
   component: RootComponent,
@@ -123,8 +130,10 @@ function RootShell({ children }: { children: ReactNode }) {
 }
 
 function RootComponent() {
-  // Aplica os preços do painel antes de renderizar a loja (SSR e navegação).
-  applyPriceOverrides(Route.useLoaderData() ?? {});
+  // Aplica produtos e preços do painel antes de renderizar a loja (SSR e navegação).
+  const catalogData = Route.useLoaderData();
+  applyCustomProducts(catalogData?.custom ?? []);
+  applyPriceOverrides(catalogData?.prices ?? {});
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
 
