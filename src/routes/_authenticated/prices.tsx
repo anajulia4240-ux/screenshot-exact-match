@@ -46,6 +46,7 @@ function PricesPage() {
     if (!current.data) return;
     const next: Record<string, Row> = {};
     for (const p of PRODUCTS) {
+      if (p.custom) continue;
       const o = priceFor(p.slug, current.data);
       next[p.slug] = { price: toInput(o.price), compareAt: toInput(o.compareAt) };
     }
@@ -63,6 +64,7 @@ function PricesPage() {
   async function save() {
     const prices: PriceMap = {};
     for (const p of PRODUCTS) {
+      if (p.custom) continue;
       const row = rows[p.slug];
       if (!row) continue;
       const price = toCents(row.price);
@@ -88,8 +90,8 @@ function PricesPage() {
   }
 
   const groups = [
-    { title: "Kits", items: PRODUCTS.filter(isKit) },
-    { title: "Produtos avulsos", items: PRODUCTS.filter((p) => !isKit(p)) },
+    { title: "Kits", items: PRODUCTS.filter((p) => !p.custom && isKit(p)) },
+    { title: "Produtos avulsos", items: PRODUCTS.filter((p) => !p.custom && !isKit(p)) },
   ];
 
   return (
