@@ -7,6 +7,36 @@ export interface Product {
   image: string;
   /** Duração do tratamento em dias. */
   days: number;
+  /** true = produto criado na aba "Adicionar produto" do painel. */
+  custom?: boolean;
+  description?: string;
+  images?: string[];
+  features?: string[];
+  sizes?: string[];
+  variants?: CustomVariant[];
+}
+
+export interface CustomVariant {
+  label: string;
+  image: string;
+}
+
+/** Produto salvo pelo painel (app_settings "custom_products"). Valores em centavos. */
+export interface CustomProduct {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  price: number;
+  compareAt: number;
+  days: number;
+  images: string[];
+  features: string[];
+  sizes: string[];
+  variants: CustomVariant[];
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export const PRODUCTS: Product[] = [
@@ -29,6 +59,44 @@ export const findProduct = (slug: string): Product | undefined => PRODUCTS.find(
 export const isKit = (p: Product): boolean => p.slug.includes("kit") || p.name.startsWith("Kit");
 export const KITS: Product[] = PRODUCTS.filter(isKit);
 export const AVULSOS: Product[] = PRODUCTS.filter((p) => !isKit(p));
+
+/** Slugs fixos do código — produtos do painel nunca podem usar um deles. */
+export const BUILTIN_SLUGS: ReadonlySet<string> = new Set(PRODUCTS.map((p) => p.slug));
+
+function removeCustom(list: Product[]) {
+  for (let i = list.length - 1; i >= 0; i--) if (list[i]!.custom) list.splice(i, 1);
+}
+
+/**
+ * Coloca os produtos do painel no catálogo (PRODUCTS, KITS, AVULSOS e findProduct refletem na hora).
+ * Só entram os ativos; os pausados/excluídos saem. Mais novos aparecem primeiro.
+ */
+export function applyCustomProducts(list: CustomProduct[] | null | undefined) {
+  removeCustom(PRODUCTS);
+  removeCustom(KITS);
+  removeCustom(AVULSOS);
+  const active = (list ?? [])
+    .filter((c) => c && c.active && !BUILTIN_SLUGS.has(c.slug) && c.images?.length && c.price >= 100)
+    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+  for (const c of active) {
+    const p: Product = {
+      slug: c.slug,
+      name: c.name,
+      price: c.price,
+      compareAt: c.compareAt,
+      image: c.images[0]!,
+      days: c.days,
+      custom: true,
+      description: c.description,
+      images: c.images,
+      features: c.features,
+      sizes: c.sizes,
+      variants: c.variants,
+    };
+    PRODUCTS.push(p);
+    (isKit(p) ? KITS : AVULSOS).push(p);
+  }
+}
 
 // ---------- Preços editáveis pelo painel (aba Preços → app_settings "product_prices") ----------
 export interface PriceOverride {
@@ -60,12 +128,17 @@ export function sanitizePriceMap(raw: unknown): PriceMap {
 
 /** Preço vigente de um produto (painel > padrão do código). */
 export function priceFor(slug: string, map: PriceMap): PriceOverride {
-  return map[slug] ?? BASE_PRICES[slug] ?? { price: 0, compareAt: 0 };
+  const own = map[slug] ?? BASE_PRICES[slug];
+  if (own) return own;
+  // Produto do painel: o preço vem do próprio cadastro.
+  const c = PRODUCTS.find((p) => p.slug === slug && p.custom);
+  return c ? { price: c.price, compareAt: c.compareAt } : { price: 0, compareAt: 0 };
 }
 
 /** Aplica os preços do painel no catálogo (KITS, AVULSOS e findProduct refletem na hora). */
 export function applyPriceOverrides(map: PriceMap) {
   for (const p of PRODUCTS) {
+    if (p.custom) continue; // preço do produto do painel é editado na aba "Adicionar produto"
     const o = priceFor(p.slug, map);
     p.price = o.price;
     p.compareAt = o.compareAt;
