@@ -2,7 +2,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
 import {
-  Activity, BadgeDollarSign, Eye, Globe, LogOut, Menu, ReceiptText, ScrollText, Settings, ShieldAlert, Sparkles, Tag, Target, Truck, Zap,
+  Activity, BadgeDollarSign, PackagePlus, Eye, Globe, LogOut, Menu, ReceiptText, ScrollText, Settings, ShieldAlert, Sparkles, Tag, Target, Truck, Zap,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -20,6 +20,7 @@ const NAV = [
   { to: "/security", label: "Segurança", icon: ShieldAlert },
   { to: "/logs", label: "Logs", icon: ScrollText },
   { to: "/coupons", label: "Cupons", icon: Tag },
+  { to: "/products", label: "Adicionar produto", icon: PackagePlus },
   { to: "/prices", label: "Preços", icon: BadgeDollarSign },
   { to: "/settings", label: "Configurações", icon: Settings },
 ] as const;
