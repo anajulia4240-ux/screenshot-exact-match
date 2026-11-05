@@ -41,6 +41,7 @@ import {
 import {
   deleteCustomProduct,
   generateProductDescription,
+  importProductFromUrl,
   listCustomProducts,
   saveCustomProduct,
   toggleCustomProductActive,
@@ -404,6 +405,39 @@ function ProductForm({
   const [saving, setSaving] = useState(false);
   const [singlePhotoWarn, setSinglePhotoWarn] = useState(false);
   const [published, setPublished] = useState(false);
+  const [importUrl, setImportUrl] = useState("");
+  const [importing, setImporting] = useState(false);
+
+  /** Cola o link de um produto (de qualquer loja) e preenche nome, descrição, preço e fotos. */
+  async function importFromLink() {
+    const u = importUrl.trim();
+    if (!/^https?:\/\/\S+$/i.test(u))
+      return void toast.error("Cole o link completo do produto (começando com https://).");
+    setImporting(true);
+    try {
+      const res = await importProductFromUrl({ data: { url: u } });
+      if (!res.ok) return void toast.error(res.error);
+      const p = res.product;
+      if (p.name) setName(p.name);
+      if (p.description) setDescription(p.description);
+      if (p.price > 0) setPriceReais(toInput(p.price));
+      if (p.compareAt > 0) setOldPriceReais(toInput(p.compareAt));
+      if (p.images.length)
+        setPhotos(p.images.slice(0, MAX_PHOTOS).map((url) => ({ url, uploading: false })));
+      const found = [
+        p.name && "nome",
+        p.description && "descrição",
+        p.price > 0 && "preço",
+        p.images.length && `${p.images.length} foto(s)`,
+      ].filter(Boolean);
+      toast.success(`Importado: ${found.join(", ")}. Confira e ajuste antes de publicar.`);
+      setImportUrl("");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Não foi possível importar esse link.");
+    } finally {
+      setImporting(false);
+    }
+  }
   const fileRef = useRef<HTMLInputElement>(null);
 
   const price = toCents(priceReais);
@@ -568,6 +602,45 @@ function ProductForm({
       >
         <ArrowLeft className="h-4 w-4" /> Voltar para a lista
       </button>
+
+      {/* Importar por link */}
+      <section className="rounded-lg border-2 border-dashed border-primary/40 bg-primary/5 p-4">
+        <h2 className="mb-1 flex items-center gap-1.5 text-sm font-semibold">
+          <Link2 className="h-4 w-4" /> Adicionar com link
+        </h2>
+        <p className="mb-3 text-xs text-muted-foreground">
+          Cole o link da página do produto (ex.: site da Happy Hair) e eu preencho nome, descrição,
+          preço e fotos.
+        </p>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Input
+            value={importUrl}
+            onChange={(e) => setImportUrl(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                void importFromLink();
+              }
+            }}
+            inputMode="url"
+            placeholder="https://www.happyhair.com.br/products/..."
+            className="h-11"
+          />
+          <Button
+            type="button"
+            className="h-11 shrink-0"
+            disabled={importing}
+            onClick={() => void importFromLink()}
+          >
+            {importing ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Search className="h-4 w-4" />
+            )}
+            {importing ? "Buscando..." : "Buscar produto"}
+          </Button>
+        </div>
+      </section>
 
       {/* Fotos */}
       <section className="rounded-lg border bg-card p-4">
