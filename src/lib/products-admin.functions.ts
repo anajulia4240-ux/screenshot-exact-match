@@ -41,18 +41,6 @@ async function writeAll(list: CustomProduct[]) {
   applyCustomProducts(list);
 }
 
-function slugify(name: string) {
-  return (
-    name
-      .normalize("NFD")
-      .replace(/[̀-ͯ]/g, "")
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "")
-      .slice(0, 80) || "produto"
-  );
-}
-
 // ---------- leitura pública (loja) ----------
 export const getPublicCustomProducts = createServerFn({ method: "GET" }).handler(
   async (): Promise<CustomProduct[]> => (await readAll()).filter((p) => p.active),
@@ -82,6 +70,8 @@ const productSchema = z.object({
   features: z.array(z.string().trim().min(1).max(200)).max(20),
   sizes: z.array(z.string().trim().min(1).max(8)).max(20),
   variants: z.array(variantSchema).max(3),
+  /** Link da página de venda (planetamundo.shop/<slug>). Vazio = gerado pelo nome. */
+  slug: z.string().trim().toLowerCase().max(60).optional(),
 });
 
 export const saveCustomProduct = createServerFn({ method: "POST" })
@@ -90,8 +80,18 @@ export const saveCustomProduct = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<CustomProduct> => {
     await assertAdmin(context.userId);
     const { BUILTIN_SLUGS } = await import("@/lib/catalog");
+    const { PAGE_SLUG_RE, RESERVED_PAGE_SLUGS, toPageSlug } = await import("@/lib/store-paths");
     const list = await readAll();
     const now = new Date().toISOString();
+    const takenBy = (slug: string) =>
+      BUILTIN_SLUGS.has(slug) ||
+      RESERVED_PAGE_SLUGS.has(slug) ||
+      list.some((p) => p.slug === slug && p.id !== data.id);
+    const wanted = data.slug ? toPageSlug(data.slug) : "";
+    if (data.slug && !PAGE_SLUG_RE.test(wanted))
+      throw new Error("Link inválido. Use só letras, números e hífen (ex.: biotina).");
+    if (wanted && takenBy(wanted))
+      throw new Error(`O link "${wanted}" já está em uso. Escolha outro.`);
     const fields = {
       name: data.name,
       description: data.description.trim(),
@@ -107,16 +107,20 @@ export const saveCustomProduct = createServerFn({ method: "POST" })
     if (data.id) {
       const i = list.findIndex((p) => p.id === data.id);
       if (i < 0) throw new Error("Produto não encontrado.");
-      const updated: CustomProduct = { ...list[i]!, ...fields, updatedAt: now };
+      const updated: CustomProduct = {
+        ...list[i]!,
+        ...fields,
+        ...(wanted ? { slug: wanted } : {}),
+        updatedAt: now,
+      };
       list[i] = updated;
       await writeAll(list);
       return updated;
     }
 
-    const taken = new Set([...BUILTIN_SLUGS, ...list.map((p) => p.slug)]);
-    const base = slugify(data.name);
+    const base = wanted || toPageSlug(data.name).slice(0, 50).replace(/-+$/g, "") || "produto";
     let slug = base;
-    while (taken.has(slug)) slug = `${base}-${Math.random().toString(36).slice(2, 6)}`;
+    while (takenBy(slug)) slug = `${base}-${Math.random().toString(36).slice(2, 6)}`;
     const created: CustomProduct = {
       id: crypto.randomUUID(),
       slug,
