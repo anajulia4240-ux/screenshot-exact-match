@@ -11,6 +11,8 @@ import {
   ArrowRight,
   ArrowUpAZ,
   Check,
+  Copy,
+  ExternalLink,
   Eye,
   EyeOff,
   ImagePlus,
@@ -50,11 +52,26 @@ import {
 import type { CustomProduct, CustomVariant } from "@/lib/catalog";
 import { brl } from "@/lib/store";
 import { logActivity } from "@/lib/audit";
+import { toPageSlug } from "@/lib/store-paths";
 
 const SIZES_PADRAO = ["PP", "P", "M", "G", "GG"] as const;
 const MAX_PHOTOS = 5;
 const MAX_COLORS = 3;
 const QUERY_KEY = ["custom-products"];
+
+/** Endereço público da página de venda do produto (o mesmo domínio do painel). */
+const pageUrl = (slug: string) =>
+  `${typeof window === "undefined" ? "https://planetamundo.shop" : window.location.origin}/${slug}`;
+const shortUrl = (slug: string) => pageUrl(slug).replace(/^https?:\/\//, "");
+
+async function copyLink(slug: string) {
+  try {
+    await navigator.clipboard.writeText(pageUrl(slug));
+    toast.success("Link copiado! Cole no anúncio.");
+  } catch {
+    toast.error("Não consegui copiar. Segure o link para copiar.");
+  }
+}
 
 /** "199,90" → 19990 centavos (NaN se inválido). */
 function toCents(v: string): number {
@@ -284,6 +301,24 @@ function ProductList({
                   </span>
                 )}
               </p>
+              <p className="mt-1 flex min-w-0 items-center gap-1.5 text-xs">
+                <a
+                  href={pageUrl(p.slug)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="truncate font-medium text-primary underline-offset-2 hover:underline"
+                >
+                  {shortUrl(p.slug)}
+                </a>
+                <button
+                  type="button"
+                  onClick={() => void copyLink(p.slug)}
+                  className="inline-flex h-7 shrink-0 items-center gap-1 rounded-md border px-2 text-[11px] font-semibold hover:bg-muted"
+                  aria-label="Copiar link da página"
+                >
+                  <Copy className="h-3 w-3" /> Copiar
+                </button>
+              </p>
             </div>
             <div className="flex shrink-0 items-center">
               <Button
@@ -380,6 +415,11 @@ function ProductForm({
   const router = useRouter();
   const qc = useQueryClient();
   const [name, setName] = useState(editing?.name ?? "");
+  const [slug, setSlug] = useState(editing?.slug ?? "");
+  const [slugTouched, setSlugTouched] = useState(!!editing);
+  const [savedSlug, setSavedSlug] = useState<string | null>(null);
+  const autoSlug = toPageSlug(name).slice(0, 50).replace(/-+$/g, "");
+  const finalSlug = slugTouched ? toPageSlug(slug) : autoSlug;
   const [description, setDescription] = useState(editing?.description ?? "");
   const [priceReais, setPriceReais] = useState(toInput(editing?.price ?? 0));
   const [oldPriceReais, setOldPriceReais] = useState(toInput(editing?.compareAt ?? 0));
@@ -550,7 +590,7 @@ function ProductForm({
             .filter((c) => c.label.trim() && c.image)
             .map((c) => ({ label: c.label.trim(), image: c.image }))
         : [];
-      await saveCustomProduct({
+      const saved = await saveCustomProduct({
         data: {
           id: editing?.id,
           name: name.trim(),
@@ -562,14 +602,15 @@ function ProductForm({
           features: features.map((f) => f.trim()).filter(Boolean),
           sizes: hasSizes ? sizes : [],
           variants,
+          slug: finalSlug || undefined,
         },
       });
+      setSavedSlug(saved.slug);
       await logActivity(editing ? "product.update" : "product.create");
       await qc.invalidateQueries({ queryKey: QUERY_KEY });
       await router.invalidate(); // atualiza a vitrine com o produto novo
       setPublished(true);
       toast.success(editing ? "Produto atualizado!" : "Produto publicado com sucesso!");
-      setTimeout(onDone, 1200);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Não foi possível publicar.");
     } finally {
@@ -586,7 +627,27 @@ function ProductForm({
         <p className="font-semibold">
           {editing ? "Produto atualizado!" : "Produto publicado com sucesso!"}
         </p>
-        <p className="text-sm text-muted-foreground">Ele já aparece na loja.</p>
+        <p className="text-sm text-muted-foreground">
+          Ele já aparece na loja e tem página própria de venda:
+        </p>
+        {savedSlug && (
+          <div className="w-full space-y-2">
+            <a
+              href={pageUrl(savedSlug)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex h-11 w-full items-center justify-center gap-1.5 truncate rounded-md border bg-muted px-3 text-sm font-semibold text-primary"
+            >
+              {shortUrl(savedSlug)} <ExternalLink className="h-4 w-4 shrink-0" />
+            </a>
+            <Button type="button" className="h-11 w-full" onClick={() => void copyLink(savedSlug)}>
+              <Copy className="h-4 w-4" /> Copiar link para o anúncio
+            </Button>
+          </div>
+        )}
+        <Button type="button" variant="outline" className="h-11 w-full" onClick={onDone}>
+          Voltar para a lista
+        </Button>
       </div>
     );
   }
@@ -749,6 +810,31 @@ function ProductForm({
             placeholder="Ex.: Kit Happy Hair 4 Potes + Colágeno Grátis"
             className="h-11"
           />
+        </label>
+        <label className="block">
+          <span className={label}>Link da página de venda (use no anúncio)</span>
+          <div className="flex h-11 items-center overflow-hidden rounded-md border bg-background focus-within:ring-2 focus-within:ring-ring">
+            <span className="shrink-0 pl-3 text-sm text-muted-foreground">
+              {shortUrl("").replace(/\/$/, "")}/
+            </span>
+            <input
+              value={slugTouched ? slug : autoSlug}
+              onChange={(e) => {
+                setSlugTouched(true);
+                setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-"));
+              }}
+              onBlur={() => setSlug((v) => toPageSlug(v))}
+              maxLength={60}
+              inputMode="url"
+              autoCapitalize="none"
+              placeholder="biotina"
+              className="h-full min-w-0 flex-1 bg-transparent pr-3 text-sm font-semibold outline-none"
+            />
+          </div>
+          <span className="mt-1 block text-[11px] text-muted-foreground">
+            Só letras, números e hífen. Ex.: biotina, kit-3-potes. Quem clicar no anúncio cai direto
+            neste produto.
+          </span>
         </label>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           <label className="block">
