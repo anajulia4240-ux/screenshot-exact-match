@@ -22,3 +22,8 @@ cd <repository-name>
 npm i
 npm run dev
 ```
+
+## Páginas de venda
+
+Cada produto criado no painel (aba **Adicionar produto**) ganha uma página própria em
+`planetamundo.shop/<link-do-produto>` (ex.: `/biotina`), pronta para usar no anúncio.
