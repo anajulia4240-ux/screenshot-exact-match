@@ -15,9 +15,15 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
 import { META_PIXEL_ID, captureTestEventCode, fbqTrack } from "@/lib/fbq";
-import { applyCustomProducts, applyPriceOverrides, type CustomProduct, type PriceMap } from "@/lib/catalog";
+import {
+  applyCustomProducts,
+  applyPriceOverrides,
+  type CustomProduct,
+  type PriceMap,
+} from "@/lib/catalog";
 import { getPublicPrices } from "@/lib/prices.functions";
 import { getPublicCustomProducts } from "@/lib/products-admin.functions";
+import { ADMIN_PATHS } from "@/lib/store-paths";
 
 const UTMIFY_PIXEL_ID = "6ae9f434e4625a333942a594";
 
@@ -63,7 +69,10 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
           >
             Tentar novamente
           </button>
-          <a href="/" className="inline-flex items-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent">
+          <a
+            href="/"
+            className="inline-flex items-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent"
+          >
             Início
           </a>
         </div>
@@ -78,7 +87,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "byhappy | Kits Happy Hair com Brindes e Frete Grátis" },
-      { name: "description", content: "Kits Happy Hair originais com brindes grátis, frete grátis e pagamento via PIX. Revendedora autorizada." },
+      {
+        name: "description",
+        content:
+          "Kits Happy Hair originais com brindes grátis, frete grátis e pagamento via PIX. Revendedora autorizada.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -86,7 +99,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         // Pixel da Meta + Utmify: só nas páginas da loja (nunca no painel/login).
         // window.__byLoad também é chamado ao navegar do painel para a loja sem recarregar.
-        children: `window.__byStore=function(p){return p==='/'||p.indexOf('/checkout')===0||p.indexOf('/rastreio')===0};window.__byLoad=function(){if(window.fbq)return false;!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq.disablePushState=true;var _am={};try{var _r=localStorage.getItem('byhappy_fb_am');if(_r){var _p=JSON.parse(_r);if(_p&&typeof _p==='object')_am=_p;}}catch(e){}if(!_am.country)_am.country='br';fbq('init','${META_PIXEL_ID}',_am,{agent:'lovable'});fbq('track','PageView');try{window.pixelId="${UTMIFY_PIXEL_ID}";var a=document.createElement("script");a.setAttribute("async","");a.setAttribute("defer","");a.setAttribute("src","https://cdn.utmify.com.br/scripts/pixel/pixel.js");document.head.appendChild(a);}catch(e){}return true};if(window.__byStore(location.pathname))window.__byLoad();`,
+        children: `var _ad=${JSON.stringify(ADMIN_PATHS)};window.__byStore=function(p){for(var i=0;i<_ad.length;i++){if(p===_ad[i]||p.indexOf(_ad[i]+'/')===0)return false}return true};window.__byLoad=function(){if(window.fbq)return false;!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq.disablePushState=true;var _am={};try{var _r=localStorage.getItem('byhappy_fb_am');if(_r){var _p=JSON.parse(_r);if(_p&&typeof _p==='object')_am=_p;}}catch(e){}if(!_am.country)_am.country='br';fbq('init','${META_PIXEL_ID}',_am,{agent:'lovable'});fbq('track','PageView');try{window.pixelId="${UTMIFY_PIXEL_ID}";var a=document.createElement("script");a.setAttribute("async","");a.setAttribute("defer","");a.setAttribute("src","https://cdn.utmify.com.br/scripts/pixel/pixel.js");document.head.appendChild(a);}catch(e){}return true};if(window.__byStore(location.pathname))window.__byLoad();`,
       },
     ],
     links: [
@@ -152,14 +165,14 @@ function RootComponent() {
     const isStore = (p: string) => w.__byStore?.(p) ?? false;
     const loadUtms = () => {
       if (document.getElementById("utmify-utms")) return;
-        const sc = document.createElement("script");
-        sc.id = "utmify-utms";
-        sc.src = "https://cdn.utmify.com.br/scripts/utms/latest.js";
-        sc.async = true;
-        sc.defer = true;
-        sc.setAttribute("data-utmify-prevent-xcod-sck", "");
-        sc.setAttribute("data-utmify-prevent-subids", "");
-        document.head.appendChild(sc);
+      const sc = document.createElement("script");
+      sc.id = "utmify-utms";
+      sc.src = "https://cdn.utmify.com.br/scripts/utms/latest.js";
+      sc.async = true;
+      sc.defer = true;
+      sc.setAttribute("data-utmify-prevent-xcod-sck", "");
+      sc.setAttribute("data-utmify-prevent-subids", "");
+      document.head.appendChild(sc);
     };
     const enterStore = () => {
       try {
